@@ -2,22 +2,20 @@ const nodes = [
 	{
 		id: 1,
 		parentNode: undefined,
-		type: 'input',
-		kind: 'trigger',
+		type: 'trigger',
 		data: {
-			kind: 'conversationOpened',
+			type: 'conversationOpened',
 			oncePerContact: false,
 		},
 	},
 	{
 		name: 'Away Message',
 		id: 'b6a0c1',
-		type: 'default',
-		kind: 'sendMessage',
+		type: 'sendMessage',
 		data: {
 			payload: [
 				{
-					kind: 'text',
+					type: 'text',
 					text: 'Sorry, we are currently away. We will respond as soon as possible.',
 				},
 			],
@@ -27,8 +25,7 @@ const nodes = [
 	{
 		name: 'Business Hours',
 		id: 'd09c08',
-		type: 'default',
-		kind: 'dateTime',
+		type: 'dateTime',
 		data: {
 			times: [
 				{
@@ -76,8 +73,7 @@ const nodes = [
 	{
 		name: 'Success',
 		id: '161f52',
-		type: 'default',
-		kind: 'dateTimeConnector',
+		type: 'dateTimeConnector',
 		data: {
 			connectorType: 'success',
 		},
@@ -86,8 +82,7 @@ const nodes = [
 	{
 		name: 'Failure',
 		id: '28c4b9',
-		type: 'default',
-		kind: 'dateTimeConnector',
+		type: 'dateTimeConnector',
 		data: {
 			connectorType: 'failure',
 		},
@@ -96,16 +91,15 @@ const nodes = [
 	{
 		name: 'Welcome Message',
 		id: 'b0653a',
-		type: 'default',
-		kind: 'sendMessage',
+		type: 'sendMessage',
 		data: {
 			payload: [
 				{
-					kind: 'text',
+					type: 'text',
 					text: 'Hello there, welcome to the chat!',
 				},
 				{
-					kind: 'attachment',
+					type: 'attachment',
 					attachment:
 						'https://fastly.picsum.photos/id/396/536/354.jpg?hmac=GmUosOuXb6nGkFhmTE-83i0ciQcaleMyvIyqzeFbW58',
 				},
@@ -115,8 +109,7 @@ const nodes = [
 	},
 	{
 		id: 'e879e4',
-		type: 'default',
-		kind: 'addComment',
+		type: 'addComment',
 		parentNode: 'b6a0c1',
 		name: 'Add Comment #1',
 		data: {

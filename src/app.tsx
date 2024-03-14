@@ -1,44 +1,154 @@
-import { defineComponent, ref } from 'vue';
+import { computed, defineComponent, markRaw, ref } from 'vue';
+import type { JSX } from 'vue/jsx-runtime';
 
 import { VueFlow, useVueFlow, type Elements } from '@vue-flow/core';
 import { Background } from '@vue-flow/background';
-// import { ControlButton, Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap';
 
 import '@vue-flow/core/dist/style.css';
 import '@vue-flow/core/dist/theme-default.css';
 
-import { Defined, Optional, capitalize } from '@poolofdeath20/util';
+import { Defined, capitalize } from '@poolofdeath20/util';
 
 import nodes from './data/nodes';
 import { TextInput } from './components/input';
 import { generatePositions } from './logic/util';
+import { ConversationTrigger } from './components/trigger';
+import { SendMessage } from './components/send-message';
+import { DateTime } from './components/date-time';
+import { DateTimeConnector } from './components/date-time-connector';
+import { AddComment } from './components/add-comment';
 
 const App = defineComponent({
 	name: 'App',
 	setup() {
-		const elements = ref<Elements>([
-			...generatePositions().map((node) => {
+		const elements = ref(
+			nodes.map((node) => {
 				return {
 					...node,
-					label: node.name ?? 'Conversation Opened',
-					id: node.id.toString(),
-					parentNode: node.parentNode?.toString(),
-					style: {
-						width: 'fit-content',
-					},
+					type: `${node.type}-${node.id}`,
 				};
-			}),
-			...nodes.map((node) => {
+			})
+		);
+
+		const getElementName = (element: (typeof elements.value)[0]) => {
+			return () => {
+				return Defined.parse(element.name).orThrow(
+					`name for ${element.type} is not defined`
+				);
+			};
+		};
+
+		const charts = [
+			ConversationTrigger(),
+			SendMessage(),
+			DateTime(),
+			DateTimeConnector(),
+			AddComment(),
+		];
+
+		const nodeTypes = elements.value
+			.map((element) => {
+				const Component = Defined.parse(
+					charts.find((chart) => {
+						return element.type.startsWith(`${chart.type}-`);
+					})
+				)
+					.map((chart) => {
+						const name = getElementName(element);
+
+						switch (chart.type) {
+							case 'trigger': {
+								return (
+									<chart.Component value="Conversation Opened" />
+								);
+							}
+							case 'sendMessage': {
+								return (
+									<chart.Component
+										title={name()}
+										value={
+											element.data.payload?.at(0)?.text ??
+											'hi fix me'
+										}
+									/>
+								);
+							}
+							case 'dateTime': {
+								return (
+									<chart.Component
+										title={name()}
+										value={Defined.parse(
+											element.timezone
+										).orThrow(
+											'timezone for dateTime is not defined'
+										)}
+									/>
+								);
+							}
+							case 'dateTimeConnector': {
+								return <chart.Component status={name()} />;
+							}
+							case 'addComment': {
+								return (
+									<chart.Component
+										title={name()}
+										value={Defined.parse(
+											element.data.comment
+										).orThrow(
+											'comment for addComment is not defined'
+										)}
+									/>
+								);
+							}
+						}
+					})
+					.map(markRaw)
+					.orThrow(`chart for ${element.type} is not defined`);
+
 				return {
-					label: 'hl',
-					id: node.parentNode ? `${node.parentNode}-${node.id}` : '',
-					source: node.parentNode?.toString() ?? '',
-					target: node.id.toString(),
-					animated: true,
+					[element.type]: Component,
 				};
-			}),
-		]);
+			})
+			.reduce(
+				(accumulator, current) => {
+					return {
+						...accumulator,
+						...current,
+					};
+				},
+				{} as Record<string, JSX.Element>
+			);
+
+		const nodesEdges = computed(() => {
+			return ref<Elements>([
+				...generatePositions(elements.value).map((node) => {
+					return {
+						...node,
+						label: node.name ?? 'Conversation Opened',
+						id: node.id.toString(),
+						parentNode: node.parentNode?.toString(),
+						style: {
+							width: 'fit-content',
+						},
+					};
+				}),
+				...elements.value.map((node) => {
+					return {
+						label: 'hl',
+						id: node.parentNode
+							? `${node.parentNode}-${node.id}`
+							: '',
+						source: node.parentNode?.toString() ?? '',
+						target: node.id.toString(),
+						animated: true,
+						style: {
+							stroke: 'red',
+						},
+					};
+				}),
+			]);
+		});
 
 		const { addEdges, onConnect } = useVueFlow();
 
@@ -63,7 +173,11 @@ const App = defineComponent({
 							border: '1px solid gray',
 						}}
 					>
-						<VueFlow modelValue={elements.value}>
+						<VueFlow
+							modelValue={nodesEdges.value.value}
+							fitViewOnInit
+							nodeTypes={nodeTypes}
+						>
 							<Background pattern-color="#121212" gap={24} />
 							<MiniMap />
 						</VueFlow>
@@ -96,7 +210,7 @@ const App = defineComponent({
 								gap: '8px',
 							}}
 						>
-							{Optional.from(
+							{Defined.parse(
 								nodes.find((node) => {
 									return node.name === 'Business Hours';
 								})
@@ -140,9 +254,7 @@ const App = defineComponent({
 										);
 									});
 								})
-								.unwrapOrElse(() => {
-									return <div>No times</div>;
-								})}
+								.orThrow('Business Hours is not defined')}
 						</div>
 					</div>
 				</div>

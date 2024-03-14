@@ -1,9 +1,11 @@
 import dagre from '@dagrejs/dagre';
 
-import nodes from '../data/nodes';
+import type nodes from '../data/nodes';
 import { Defined } from '@poolofdeath20/util';
 
-const generatePositions = (): ReadonlyArray<
+const generatePositions = (
+	nodeList: typeof nodes
+): ReadonlyArray<
 	(typeof nodes)[0] & { position: { x: number; y: number } }
 > => {
 	// Create a new directed graph
@@ -19,15 +21,15 @@ const generatePositions = (): ReadonlyArray<
 		return {};
 	});
 
-	nodes.forEach((node) => {
+	nodeList.forEach((node) => {
 		graph.setNode(node.id.toString(), {
 			label: node.name,
-			width: (node.name?.length ?? 0) * 5,
-			height: 25,
+			width: (node.name?.length ?? 0) * 7,
+			height: 40,
 		});
 	});
 
-	nodes.forEach((node) => {
+	nodeList.forEach((node) => {
 		if (node.parentNode) {
 			graph.setEdge(node.id.toString(), node.parentNode.toString());
 		}
@@ -41,7 +43,7 @@ const generatePositions = (): ReadonlyArray<
 		return { x, y, label };
 	});
 
-	return nodes.map((node) => {
+	return nodeList.map((node) => {
 		const { x, y } = Defined.parse(
 			nodesPosition.find((position) => {
 				return position.label === node.name;
