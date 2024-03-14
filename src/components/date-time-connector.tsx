@@ -15,9 +15,12 @@ const DateTimeConnector = () => {
 					return (
 						<div
 							style={{
-								borderRadius: '16px',
-								border: '1px solid grey',
+								borderRadius: '12px',
 								padding: '8px',
+								backgroundColor:
+									props.status.toLowerCase() === 'success'
+										? '#D1F2EB'
+										: '#F8D7DA',
 							}}
 						>
 							{props.status}

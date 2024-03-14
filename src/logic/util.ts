@@ -3,10 +3,16 @@ import dagre from '@dagrejs/dagre';
 import type nodes from '../data/nodes';
 import { Defined } from '@poolofdeath20/util';
 
+type Position = Readonly<{ x: number; y: number }>;
+
 const generateNodesPositions = (
-	nodeList: typeof nodes
+	nodeList: typeof nodes,
+	size: Readonly<{
+		width: number;
+		height: number;
+	}>
 ): ReadonlyArray<
-	(typeof nodes)[0] & { position: { x: number; y: number } }
+	(typeof nodes)[0] & { position: Position; computedPosition: Position }
 > => {
 	// Create a new directed graph
 	const graph = new dagre.graphlib.Graph();
@@ -24,8 +30,8 @@ const generateNodesPositions = (
 	nodeList.forEach((node) => {
 		graph.setNode(node.id.toString(), {
 			label: node.id.toString(),
-			width: (node.name?.length ?? 0) * 7,
-			height: 40,
+			width: size.width / 1.5,
+			height: size.height,
 		});
 	});
 
@@ -40,7 +46,11 @@ const generateNodesPositions = (
 	const nodesPosition = graph.nodes().map((node) => {
 		const { x, y, label } = graph.node(node);
 
-		return { x, y, label };
+		return {
+			label,
+			x: x - size.width / 2,
+			y: y - size.height / 2,
+		};
 	});
 
 	return nodeList.map((node) => {
@@ -50,12 +60,15 @@ const generateNodesPositions = (
 			})
 		)
 			.map(({ x, y }) => {
+				const position = {
+					x,
+					y,
+				};
+
 				return {
 					...node,
-					position: {
-						x,
-						y,
-					},
+					position,
+					computedPosition: position,
 				};
 			})
 			.orThrow('Position not found');

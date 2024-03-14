@@ -1,25 +1,33 @@
 import { defineComponent } from 'vue';
 
-import { AbstractNode } from './abstract';
+import { CalendarIcon } from '@heroicons/vue/24/outline';
+
+import { AbstractNode, props } from './abstract';
 
 const DateTime = () => {
 	return {
 		type: 'dateTime',
 		Component: defineComponent({
 			props: {
-				title: {
-					type: String,
-					required: true,
-				},
-				value: {
-					type: String,
-					required: true,
-				},
+				id: props.id,
+				title: props.title,
+				value: props.value,
+				size: props.size,
+				param: props.param,
 			},
 			setup(props) {
 				return () => {
 					return (
-						<AbstractNode title={props.title} value={props.value} />
+						<AbstractNode
+							{...props}
+							icon={
+								<CalendarIcon
+									style={{
+										width: '24px',
+									}}
+								/>
+							}
+						/>
 					);
 				};
 			},

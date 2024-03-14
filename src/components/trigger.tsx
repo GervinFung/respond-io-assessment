@@ -1,20 +1,34 @@
 import { defineComponent } from 'vue';
 
-import { AbstractNode } from './abstract';
+import { BoltIcon } from '@heroicons/vue/24/outline';
+
+import { AbstractNode, props } from './abstract';
 
 const ConversationTrigger = () => {
 	return {
 		type: 'trigger',
 		Component: defineComponent({
 			props: {
-				value: {
-					type: String,
-					required: true,
-				},
+				id: props.id,
+				value: props.value,
+				size: props.size,
+				param: props.param,
 			},
 			setup(props) {
 				return () => {
-					return <AbstractNode title="Trigger" value={props.value} />;
+					return (
+						<AbstractNode
+							title="Trigger"
+							{...props}
+							icon={
+								<BoltIcon
+									style={{
+										width: '24px',
+									}}
+								/>
+							}
+						/>
+					);
 				};
 			},
 		}),
