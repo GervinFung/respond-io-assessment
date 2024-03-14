@@ -3,7 +3,7 @@ import dagre from '@dagrejs/dagre';
 import type nodes from '../data/nodes';
 import { Defined } from '@poolofdeath20/util';
 
-const generatePositions = (
+const generateNodesPositions = (
 	nodeList: typeof nodes
 ): ReadonlyArray<
 	(typeof nodes)[0] & { position: { x: number; y: number } }
@@ -23,7 +23,7 @@ const generatePositions = (
 
 	nodeList.forEach((node) => {
 		graph.setNode(node.id.toString(), {
-			label: node.name,
+			label: node.id.toString(),
 			width: (node.name?.length ?? 0) * 7,
 			height: 40,
 		});
@@ -31,7 +31,7 @@ const generatePositions = (
 
 	nodeList.forEach((node) => {
 		if (node.parentNode) {
-			graph.setEdge(node.id.toString(), node.parentNode.toString());
+			graph.setEdge(node.parentNode.toString(), node.id.toString());
 		}
 	});
 
@@ -44,20 +44,22 @@ const generatePositions = (
 	});
 
 	return nodeList.map((node) => {
-		const { x, y } = Defined.parse(
+		return Defined.parse(
 			nodesPosition.find((position) => {
-				return position.label === node.name;
+				return position.label === node.id.toString();
 			})
-		).orThrow('Position not found');
-
-		return {
-			...node,
-			position: {
-				x,
-				y,
-			},
-		};
+		)
+			.map(({ x, y }) => {
+				return {
+					...node,
+					position: {
+						x,
+						y,
+					},
+				};
+			})
+			.orThrow('Position not found');
 	});
 };
 
-export { generatePositions };
+export { generateNodesPositions };

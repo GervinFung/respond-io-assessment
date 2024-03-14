@@ -12,7 +12,7 @@ import { Defined, capitalize } from '@poolofdeath20/util';
 
 import nodes from './data/nodes';
 import { TextInput } from './components/input';
-import { generatePositions } from './logic/util';
+import { generateNodesPositions } from './logic/util';
 import { ConversationTrigger } from './components/trigger';
 import { SendMessage } from './components/send-message';
 import { DateTime } from './components/date-time';
@@ -122,7 +122,7 @@ const App = defineComponent({
 
 		const nodesEdges = computed(() => {
 			return ref<Elements>([
-				...generatePositions(elements.value).map((node) => {
+				...generateNodesPositions(elements.value).map((node) => {
 					return {
 						...node,
 						label: node.name ?? 'Conversation Opened',
