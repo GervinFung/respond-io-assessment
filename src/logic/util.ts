@@ -4,17 +4,17 @@ import { Position } from '@vue-flow/core';
 
 import { Defined } from '@poolofdeath20/util';
 
-import type { NodeStore } from '../stores/nodes';
+import type nodelist from '../data/nodes';
 
-const generateNodesPositions = <Nodes extends NodeStore['nodes']>(
-	nodes: Nodes,
-	size: Readonly<{
-		width: number;
-		height: number;
-	}>
+import { size } from '../const';
+
+type Coordinate = Readonly<{ x: number; y: number }>;
+
+const generateNodesPositions = <Nodes extends typeof nodelist>(
+	nodes: Nodes
 ): ReadonlyArray<
 	Nodes[0] & {
-		position: Readonly<{ x: number; y: number }>;
+		position: Coordinate;
 	}
 > => {
 	// Create a new directed graph
@@ -76,5 +76,7 @@ const generateNodesPositions = <Nodes extends NodeStore['nodes']>(
 			.orThrow('Position not found');
 	});
 };
+
+export type { Coordinate };
 
 export { generateNodesPositions };

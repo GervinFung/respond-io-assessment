@@ -26,6 +26,7 @@ import { DateTimeConnector } from '../components/date-time-connector';
 import { AddComment } from '../components/add-comment';
 import useNodeStore from '../stores/nodes';
 import { generateNodesPositions } from '../logic/util';
+import { size } from '../const';
 
 type Type = Readonly<{
 	type: string;
@@ -53,11 +54,6 @@ const Home = defineComponent({
 				return Optional.none<string>();
 			});
 		});
-
-		const size = {
-			width: 250,
-			height: 100,
-		};
 
 		const nodestore = useNodeStore();
 		const { nodes, edges } = storeToRefs(nodestore);
@@ -235,16 +231,6 @@ const Home = defineComponent({
 				);
 		});
 
-		const nodesFlowChart = computed(() => {
-			return generateNodesPositions(nodes.value, size).map((node) => {
-				return {
-					...node,
-					id: node.id.toString(),
-					parentNode: node.parentNode?.toString(),
-				} satisfies Node;
-			});
-		});
-
 		const edgesFlowChart = computed(() => {
 			return edges.value.map((edge) => {
 				return {
@@ -388,11 +374,11 @@ const Home = defineComponent({
 				>
 					<VueFlow
 						fitViewOnInit
-						nodes={nodesFlowChart.value}
+						nodes={nodes.value}
 						edges={edgesFlowChart.value}
 						nodeTypes={nodeTypes.value}
-						onNodeDrag={({ node }) => {
-							console.log(node);
+						onNodeDrag={(event) => {
+							nodestore.updateNodePosition(event.node);
 						}}
 					>
 						<Background pattern-color="#121212" gap={24} />

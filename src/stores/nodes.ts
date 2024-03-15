@@ -6,10 +6,12 @@ import nodes from '../data/nodes';
 
 import { type Payload } from '../components/send-message';
 
+import { generateNodesPositions, type Coordinate } from '../logic/util';
+
 const useNodeStore = defineStore('nodes', {
 	state: () => {
 		return {
-			nodes: nodes.map((node) => {
+			nodes: generateNodesPositions(nodes).map((node) => {
 				const { length } = nodes.filter(({ type }) => {
 					return type === node.type;
 				});
@@ -18,6 +20,8 @@ const useNodeStore = defineStore('nodes', {
 					...node,
 					name: node.name ?? node.type,
 					type: length === 1 ? node.type : `${node.type}-${node.id}`,
+					id: node.id.toString(),
+					parentNode: node.parentNode?.toString(),
 				};
 			}),
 			edges: nodes.map((node) => {
@@ -145,6 +149,23 @@ const useNodeStore = defineStore('nodes', {
 				sendMessage.data.payload = props.payload.slice();
 				sendMessage.name = props.name;
 			}
+		},
+		updateNodePosition(
+			props: Readonly<{
+				id: string;
+				position: Coordinate;
+			}>
+		) {
+			this.nodes = this.nodes.map((node) => {
+				if (props.id !== node.id) {
+					return node;
+				}
+
+				return {
+					...node,
+					position: props.position,
+				};
+			});
 		},
 	},
 });
