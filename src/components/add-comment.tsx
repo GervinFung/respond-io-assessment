@@ -5,7 +5,7 @@ import { Flex, TypographyText } from 'ant-design-vue';
 import { ChatBubbleBottomCenterIcon } from '@heroicons/vue/24/outline';
 
 import { AbstractNode, props, childProps, isCurrentId } from './abstract';
-import { TextInput } from './input';
+import { TextField } from './input';
 
 const AddComment = () => {
 	return {
@@ -43,9 +43,9 @@ const AddComment = () => {
 						}
 						case true: {
 							return (
-								<Flex vertical>
-									<TypographyText>Title</TypographyText>
-									<TextInput
+								<Flex vertical gap={8}>
+									<TextField
+										title="Title"
 										placeholder="Add a title"
 										value={props.title}
 										onChange={(name) => {
@@ -55,8 +55,8 @@ const AddComment = () => {
 											});
 										}}
 									/>
-									<TypographyText>Comment</TypographyText>
-									<TextInput
+									<TextField
+										title="Comment"
 										placeholder="Add a comment"
 										value={props.value}
 										onChange={(comment) => {

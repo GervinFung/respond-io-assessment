@@ -7,7 +7,7 @@ import { BoltIcon } from '@heroicons/vue/24/outline';
 import { capitalize } from '@poolofdeath20/util';
 
 import { AbstractNode, props, childProps, isCurrentId } from './abstract';
-import { TextInput } from './input';
+import { TextField } from './input';
 
 const ConversationTrigger = () => {
 	return {
@@ -45,9 +45,9 @@ const ConversationTrigger = () => {
 						}
 						case true: {
 							return (
-								<Flex vertical>
-									<TypographyText>Title</TypographyText>
-									<TextInput
+								<Flex vertical gap={8}>
+									<TextField
+										title="Title"
 										placeholder="Add a title"
 										value={props.title}
 										onChange={(title) => {
@@ -57,8 +57,8 @@ const ConversationTrigger = () => {
 											});
 										}}
 									/>
-									<TypographyText>Value</TypographyText>
-									<TextInput
+									<TextField
+										title="Value"
 										placeholder="Add a value (temp)"
 										value={props.value}
 										onChange={(value) => {

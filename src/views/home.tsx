@@ -126,11 +126,38 @@ const Home = defineComponent({
 									return (
 										<chart.Component
 											{...props}
-											value={Defined.parse(
-												node.data.payload?.at(0)?.text
-											).orThrow(
-												'text for sendMessage is not defined'
-											)}
+											payload={Defined.parse(
+												node.data.payload
+											)
+												.map((payload) => {
+													return payload.map(
+														(payload) => {
+															if (payload.text) {
+																return {
+																	type: 'text',
+																	text: payload.text,
+																} as const;
+															}
+
+															if (
+																payload.attachment
+															) {
+																return {
+																	type: 'attachment',
+																	attachment:
+																		payload.attachment,
+																} as const;
+															}
+
+															throw new Error(
+																'payload for sendMessage is not defined'
+															);
+														}
+													);
+												})
+												.orThrow(
+													'payload for sendMessage is not defined'
+												)}
 										/>
 									);
 								}
