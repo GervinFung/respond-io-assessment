@@ -1,8 +1,10 @@
 import { defineComponent } from 'vue';
 
+import { Flex, TypographyText } from 'ant-design-vue';
+
 import { ChatBubbleLeftIcon } from '@heroicons/vue/24/outline';
 
-import { AbstractNode, props } from './abstract';
+import { AbstractNode, childProps, props } from './abstract';
 
 const SendMessage = () => {
 	return {
@@ -11,7 +13,7 @@ const SendMessage = () => {
 			props: {
 				id: props.id,
 				title: props.title,
-				value: props.value,
+				value: childProps.value,
 				size: props.size,
 				param: props.param,
 			},
@@ -19,7 +21,6 @@ const SendMessage = () => {
 				return () => {
 					return (
 						<AbstractNode
-							shouldItalic
 							{...props}
 							icon={
 								<ChatBubbleLeftIcon
@@ -28,7 +29,14 @@ const SendMessage = () => {
 									}}
 								/>
 							}
-						/>
+						>
+							<Flex vertical>
+								<TypographyText>Message:</TypographyText>
+								<TypographyText mark>
+									{props.value}
+								</TypographyText>
+							</Flex>
+						</AbstractNode>
 					);
 				};
 			},

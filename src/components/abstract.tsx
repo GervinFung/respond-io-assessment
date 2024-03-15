@@ -1,7 +1,43 @@
-import { defineComponent, type PropType } from 'vue';
+import {
+	defineComponent,
+	type Events,
+	type PropType,
+	type SetupContext,
+	type SlotsType,
+} from 'vue';
+import type { JSX } from 'vue/jsx-runtime';
+
 import { RouterLink } from 'vue-router';
 
-import type { JSX } from 'vue/jsx-runtime';
+import { Flex, TypographyTitle } from 'ant-design-vue';
+
+import type { DeepReadonly } from '@poolofdeath20/util';
+
+type Slots = Readonly<{
+	default?: () => JSX.Element;
+}>;
+
+type Props = DeepReadonly<{
+	id: string;
+	param:
+		| undefined
+		| {
+				id: string;
+		  };
+	title: string;
+	size: {
+		width: number;
+		height: number;
+	};
+	icon: JSX.Element;
+}>;
+
+const childProps = {
+	value: {
+		type: String,
+		required: true,
+	},
+} as const;
 
 const props = {
 	id: {
@@ -9,45 +45,27 @@ const props = {
 		required: true,
 	},
 	param: {
-		type: Object as PropType<
-			| undefined
-			| Readonly<{
-					id: string;
-			  }>
-		>,
-		required: false,
+		type: Object as PropType<Props['param']>,
+		required: true,
 	},
 	title: {
 		type: String,
 		required: true,
 	},
-	value: {
-		type: String,
-		required: true,
-	},
-	shouldItalic: {
-		type: Boolean,
-		required: false,
-	},
 	size: {
-		type: Object as PropType<
-			Readonly<{
-				width: number;
-				height: number;
-			}>
-		>,
+		type: Object as PropType<Props['size']>,
 		required: true,
 	},
 	icon: {
-		type: Object as PropType<JSX.Element>,
+		type: Object as PropType<Props['icon']>,
 		required: true,
 	},
 } as const;
 
 const AbstractNode = defineComponent({
 	props,
-	name: 'AbstractNode',
-	setup(props) {
+	name: 'abstract-node',
+	setup(props: Props, context: SetupContext<Events, SlotsType<Slots>>) {
 		return () => {
 			const style = {
 				padding: 12,
@@ -61,7 +79,8 @@ const AbstractNode = defineComponent({
 						textDecoration: 'none',
 					}}
 				>
-					<div
+					<Flex
+						vertical
 						style={{
 							color: '#121212',
 							borderRadius: '8px',
@@ -72,51 +91,40 @@ const AbstractNode = defineComponent({
 							cursor: 'pointer',
 						}}
 					>
-						<div
+						<Flex
+							gap={8}
+							align="center"
 							style={{
-								display: 'flex',
-								alignItems: 'center',
 								padding: `${style.padding}px`,
 								borderBottom: `1px solid ${style.borderColor}`,
-								gap: '8px',
 							}}
 						>
 							{props.icon}
-							<div
-								style={{
-									fontWeight: 'bold',
-								}}
-							>
-								{props.title}
-							</div>
-						</div>
+							<Flex>
+								<TypographyTitle
+									level={5}
+									// @ts-expect-error: Style doesn't exists for `TypographyTitle`, but injectable in runtime
+									style={{
+										margin: 0,
+									}}
+								>
+									{props.title}
+								</TypographyTitle>
+							</Flex>
+						</Flex>
 						<div
 							style={{
 								padding: `${style.padding}px`,
 							}}
 						>
-							<div
-								style={{
-									marginBottom: '8px',
-								}}
-							>
-								Message:
-							</div>
-							<div
-								style={{
-									fontStyle: props.shouldItalic
-										? 'italic'
-										: undefined,
-								}}
-							>
-								{props.value}
-							</div>
+							{context.slots.default?.()}
 						</div>
-					</div>
+					</Flex>
 				</RouterLink>
 			);
 		};
 	},
 });
 
-export { AbstractNode, props };
+export { props, childProps };
+export { AbstractNode };

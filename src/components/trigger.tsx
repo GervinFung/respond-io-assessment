@@ -1,8 +1,10 @@
 import { defineComponent } from 'vue';
 
+import { TypographyText } from 'ant-design-vue';
+
 import { BoltIcon } from '@heroicons/vue/24/outline';
 
-import { AbstractNode, props } from './abstract';
+import { AbstractNode, props, childProps } from './abstract';
 
 const ConversationTrigger = () => {
 	return {
@@ -10,7 +12,7 @@ const ConversationTrigger = () => {
 		Component: defineComponent({
 			props: {
 				id: props.id,
-				value: props.value,
+				value: childProps.value,
 				size: props.size,
 				param: props.param,
 			},
@@ -27,7 +29,9 @@ const ConversationTrigger = () => {
 									}}
 								/>
 							}
-						/>
+						>
+							<TypographyText>{props.value}</TypographyText>
+						</AbstractNode>
 					);
 				};
 			},

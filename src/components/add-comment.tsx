@@ -1,8 +1,10 @@
 import { defineComponent } from 'vue';
 
+import { TypographyText } from 'ant-design-vue';
+
 import { ChatBubbleBottomCenterIcon } from '@heroicons/vue/24/outline';
 
-import { AbstractNode, props } from './abstract';
+import { AbstractNode, props, childProps } from './abstract';
 
 const AddComment = () => {
 	return {
@@ -11,7 +13,7 @@ const AddComment = () => {
 			props: {
 				id: props.id,
 				title: props.title,
-				value: props.value,
+				value: childProps.value,
 				size: props.size,
 				param: props.param,
 			},
@@ -27,7 +29,9 @@ const AddComment = () => {
 									}}
 								/>
 							}
-						/>
+						>
+							<TypographyText>{props.value}</TypographyText>
+						</AbstractNode>
 					);
 				};
 			},

@@ -237,14 +237,12 @@ const Home = defineComponent({
 
 		return () => {
 			return (
-				<div
+				<Flex
+					gap={8}
 					style={{
 						fontFamily: `'Inter Variable', sans-serif`,
-						display: 'flex',
-						flexDirection: 'row',
 						height: '100vh',
 						width: '100%',
-						gap: '8px',
 					}}
 				>
 					<Row
@@ -274,12 +272,11 @@ const Home = defineComponent({
 							</div>
 						</Col>
 						<Col span={grid.rowLength - grid.vueFlow}>
-							<div
+							<Flex
+								gap={8}
+								vertical
 								style={{
-									display: 'flex',
-									flexDirection: 'column',
 									padding: '24px',
-									gap: '8px',
 								}}
 							>
 								<TypographyTitle
@@ -292,14 +289,7 @@ const Home = defineComponent({
 									Business Hours
 								</TypographyTitle>
 								<Divider />
-								<div
-									style={{
-										display: 'flex',
-										flexDirection: 'column',
-										alignItems: 'flex-start',
-										gap: '16px',
-									}}
-								>
+								<Flex vertical align="flex-start" gap={16}>
 									{nodestore.businessHourTimes.map(
 										(time, index) => {
 											return (
@@ -338,15 +328,9 @@ const Home = defineComponent({
 											);
 										}
 									)}
-								</div>
+								</Flex>
 								<Divider />
-								<div
-									style={{
-										display: 'flex',
-										flexDirection: 'column',
-										alignItems: 'flex-start',
-									}}
-								>
+								<Flex align="flex-start" vertical>
 									<TypographyText>Timezone</TypographyText>
 									<Select
 										style={{
@@ -392,11 +376,11 @@ const Home = defineComponent({
 												);
 											})}
 									</Select>
-								</div>
-							</div>
+								</Flex>
+							</Flex>
 						</Col>
 					</Row>
-				</div>
+				</Flex>
 			);
 		};
 	},
