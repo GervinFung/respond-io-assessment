@@ -6,18 +6,29 @@ import { Defined } from '@poolofdeath20/util';
 const useNodeStore = defineStore('nodes', {
 	state: () => {
 		return {
-			nodeList: nodes.map((node) => {
+			nodes: nodes.map((node) => {
 				return {
 					...node,
 					type: `${node.type}-${node.id}`,
 				};
 			}),
+			edges: nodes.map((node) => {
+				const source = node.parentNode?.toString() ?? '';
+				const target = node.id?.toString() ?? '';
+
+				return {
+					id: `${source}-${target}`,
+					source,
+					target,
+					type: `${node.type}-${target}`,
+				};
+			}),
 		};
 	},
 	getters: {
-		businessHour(state) {
+		businessHour: (state) => {
 			return Defined.parse(
-				state.nodeList.find((node) => {
+				state.nodes.find((node) => {
 					return node.name === 'Business Hours';
 				})
 			).orThrow('Business Hours is not defined');
@@ -36,14 +47,21 @@ const useNodeStore = defineStore('nodes', {
 				'Times are not defined'
 			);
 		},
+		comment: (state) => {
+			return Defined.parse(
+				state.nodes.find((node) => {
+					return node.type.startsWith('addComment');
+				})
+			).orThrow('Comment is not defined');
+		},
 	},
 	actions: {
 		updateTimezone(timezone: string) {
-			const index = this.nodeList.findIndex((node) => {
+			const index = this.nodes.findIndex((node) => {
 				return node.name === 'Business Hours';
 			});
 
-			this.nodeList[index].timezone = timezone;
+			this.nodes[index].timezone = timezone;
 		},
 		updateBusinessHourTimes(
 			index: number,
@@ -57,6 +75,18 @@ const useNodeStore = defineStore('nodes', {
 
 			times[index].endTime =
 				Defined.parse(end).orThrow('end is not defined');
+		},
+		updateComment(
+			props: Readonly<{
+				name: string;
+				comment: string;
+			}>
+		) {
+			// idk why pinia auto passes an event object when clicking outside
+			if (!(props instanceof Event)) {
+				this.comment.data.comment = props.comment;
+				this.comment.name = props.name;
+			}
 		},
 	},
 });

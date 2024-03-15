@@ -11,25 +11,18 @@ import { RouterLink } from 'vue-router';
 
 import { Flex, TypographyTitle } from 'ant-design-vue';
 
-import type { DeepReadonly } from '@poolofdeath20/util';
+type Param =
+	| undefined
+	| Readonly<{
+			id: string;
+	  }>;
+
+const isCurrentId = (id: string, param: Param) => {
+	return id === param?.id;
+};
 
 type Slots = Readonly<{
 	default?: () => JSX.Element;
-}>;
-
-type Props = DeepReadonly<{
-	id: string;
-	param:
-		| undefined
-		| {
-				id: string;
-		  };
-	title: string;
-	size: {
-		width: number;
-		height: number;
-	};
-	icon: JSX.Element;
 }>;
 
 const childProps = {
@@ -45,7 +38,7 @@ const props = {
 		required: true,
 	},
 	param: {
-		type: Object as PropType<Props['param']>,
+		type: Object as PropType<Param>,
 		required: true,
 	},
 	title: {
@@ -53,11 +46,14 @@ const props = {
 		required: true,
 	},
 	size: {
-		type: Object as PropType<Props['size']>,
+		type: Object as PropType<{
+			width: number;
+			height: number;
+		}>,
 		required: true,
 	},
 	icon: {
-		type: Object as PropType<Props['icon']>,
+		type: Object as PropType<JSX.Element>,
 		required: true,
 	},
 } as const;
@@ -65,7 +61,7 @@ const props = {
 const AbstractNode = defineComponent({
 	props,
 	name: 'abstract-node',
-	setup(props: Props, context: SetupContext<Events, SlotsType<Slots>>) {
+	setup(props, context: SetupContext<Events, SlotsType<Slots>>) {
 		return () => {
 			const style = {
 				padding: 12,
@@ -126,5 +122,5 @@ const AbstractNode = defineComponent({
 	},
 });
 
-export { props, childProps };
+export { props, childProps, isCurrentId };
 export { AbstractNode };
