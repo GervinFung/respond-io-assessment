@@ -1,27 +1,41 @@
 import { defineComponent, type PropType } from 'vue';
 
+import { Input } from 'ant-design-vue';
+import { Defined } from '@poolofdeath20/util';
+
 const TextInput = defineComponent({
 	name: 'TextInput',
 	props: {
+		placeholder: {
+			type: String,
+			required: true,
+		},
 		value: {
 			type: String,
 			required: true,
 		},
-		onChange: Function as PropType<(value: string) => void>,
+		onChange: {
+			type: Function as PropType<(value: string) => void>,
+			required: true,
+		},
 	},
 	setup(props) {
 		return () => {
 			return (
-				<input
-					type="text"
+				<Input
+					placeholder={props.placeholder}
 					value={props.value}
-					style={{
-						borderRadius: '8px',
-						width: '50px',
-						padding: '8px 12px',
-						border: '1px solid #C1C1C1',
-						fontSize: '1em',
-						textAlign: 'center',
+					onChange={(event) => {
+						const value = Defined.parse(event.target)
+							.map((target) => {
+								return Defined.parse(target.value);
+							})
+							.orThrow('target of event input is undefined')
+							.orThrow(
+								'value of target of event input is undefined'
+							);
+
+						props.onChange(value);
 					}}
 				/>
 			);

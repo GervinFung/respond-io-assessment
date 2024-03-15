@@ -1,15 +1,21 @@
 import { defineStore } from 'pinia';
 
-import nodes from '../data/nodes';
 import { Defined } from '@poolofdeath20/util';
+
+import nodes from '../data/nodes';
 
 const useNodeStore = defineStore('nodes', {
 	state: () => {
 		return {
 			nodes: nodes.map((node) => {
+				const { length } = nodes.filter(({ type }) => {
+					return type === node.type;
+				});
+
 				return {
 					...node,
-					type: `${node.type}-${node.id}`,
+					name: node.name ?? node.type,
+					type: length === 1 ? node.type : `${node.type}-${node.id}`,
 				};
 			}),
 			edges: nodes.map((node) => {
@@ -29,7 +35,7 @@ const useNodeStore = defineStore('nodes', {
 		businessHour: (state) => {
 			return Defined.parse(
 				state.nodes.find((node) => {
-					return node.name === 'Business Hours';
+					return node.type.startsWith('dateTime');
 				})
 			).orThrow('Business Hours is not defined');
 		},
@@ -53,6 +59,13 @@ const useNodeStore = defineStore('nodes', {
 					return node.type.startsWith('addComment');
 				})
 			).orThrow('Comment is not defined');
+		},
+		trigger: (state) => {
+			return Defined.parse(
+				state.nodes.find((node) => {
+					return node.type.startsWith('trigger');
+				})
+			).orThrow('Trigger is not defined');
 		},
 	},
 	actions: {
@@ -86,6 +99,18 @@ const useNodeStore = defineStore('nodes', {
 			if (!(props instanceof Event)) {
 				this.comment.data.comment = props.comment;
 				this.comment.name = props.name;
+			}
+		},
+		updateTrigger(
+			props: Readonly<{
+				title: string;
+				value: string;
+			}>
+		) {
+			// idk why pinia auto passes an event object when clicking outside
+			if (!(props instanceof Event)) {
+				this.trigger.data.type = props.value;
+				this.trigger.name = props.title;
 			}
 		},
 	},

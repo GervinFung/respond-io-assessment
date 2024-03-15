@@ -1,18 +1,19 @@
 import dagre from '@dagrejs/dagre';
 
-import type nodes from '../data/nodes';
+import { Position } from '@vue-flow/core';
+
 import { Defined } from '@poolofdeath20/util';
 
-type Position = Readonly<{ x: number; y: number }>;
+import type nodes from '../data/nodes';
 
-const generateNodesPositions = (
-	nodeList: typeof nodes,
+const generateNodesPositions = <Nodes extends typeof nodes>(
+	nodeList: Nodes,
 	size: Readonly<{
 		width: number;
 		height: number;
 	}>
 ): ReadonlyArray<
-	(typeof nodes)[0] & { position: Position; computedPosition: Position }
+	(typeof nodes)[0] & { position: Readonly<{ x: number; y: number }> }
 > => {
 	// Create a new directed graph
 	const graph = new dagre.graphlib.Graph();
@@ -30,7 +31,7 @@ const generateNodesPositions = (
 	nodeList.forEach((node) => {
 		graph.setNode(node.id.toString(), {
 			label: node.id.toString(),
-			width: size.width / 1.5,
+			width: size.width,
 			height: size.height,
 		});
 	});
@@ -48,8 +49,8 @@ const generateNodesPositions = (
 
 		return {
 			label,
-			x: x - size.width / 2,
-			y: y - size.height / 2,
+			x,
+			y,
 		};
 	});
 
@@ -60,15 +61,14 @@ const generateNodesPositions = (
 			})
 		)
 			.map(({ x, y }) => {
-				const position = {
-					x,
-					y,
-				};
-
 				return {
 					...node,
-					position,
-					computedPosition: position,
+					position: {
+						x,
+						y,
+					},
+					sourcePosition: Position.Top,
+					targetPosition: Position.Bottom,
 				};
 			})
 			.orThrow('Position not found');

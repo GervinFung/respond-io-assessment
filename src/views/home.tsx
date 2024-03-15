@@ -38,6 +38,7 @@ import { DateTime } from '../components/date-time';
 import { DateTimeConnector } from '../components/date-time-connector';
 import { AddComment } from '../components/add-comment';
 import useNodeStore from '../stores/nodes';
+import { generateNodesPositions } from '../logic/util';
 
 const Home = defineComponent({
 	name: 'home',
@@ -69,11 +70,9 @@ const Home = defineComponent({
 		const { nodes, edges } = storeToRefs(nodestore);
 
 		const getElementName = (element: (typeof nodes.value)[0]) => {
-			return () => {
-				return Defined.parse(element.name).orThrow(
-					`name for ${element.type} is not defined`
-				);
-			};
+			return Defined.parse(element.name).orThrow(
+				`name for ${element.type} is not defined`
+			);
 		};
 
 		const charts = [
@@ -89,7 +88,10 @@ const Home = defineComponent({
 				.map((node) => {
 					const Component = Defined.parse(
 						charts.find((chart) => {
-							return node.type.startsWith(`${chart.type}-`);
+							return (
+								node.type === chart.type ||
+								node.type.startsWith(`${chart.type}-`)
+							);
 						})
 					)
 						.map((chart) => {
@@ -97,32 +99,37 @@ const Home = defineComponent({
 
 							const id = node.id.toString();
 
+							const param = paramId.value.unwrapOrGet(undefined);
+
+							const props = {
+								id,
+								title: name,
+								param,
+								size,
+							};
+
 							switch (chart.type) {
 								case 'trigger': {
 									return (
 										<chart.Component
-											id={id}
-											value="Conversation Opened"
-											size={size}
-											param={paramId.value.unwrapOrGet(
-												undefined
+											{...props}
+											value={Defined.parse(
+												node.data.type
+											).orThrow(
+												'type for trigger is not defined'
 											)}
+											onChange={nodestore.updateTrigger}
 										/>
 									);
 								}
 								case 'sendMessage': {
 									return (
 										<chart.Component
-											id={id}
-											title={name()}
+											{...props}
 											value={Defined.parse(
 												node.data.payload?.at(0)?.text
 											).orThrow(
 												'text for sendMessage is not defined'
-											)}
-											size={size}
-											param={paramId.value.unwrapOrGet(
-												undefined
 											)}
 										/>
 									);
@@ -130,46 +137,35 @@ const Home = defineComponent({
 								case 'dateTime': {
 									return (
 										<chart.Component
-											key={nodestore.businessHourTimezone}
-											id={id}
-											title={name()}
+											{...props}
 											value={Defined.parse(
 												node.timezone
 											).orThrow(
 												'timezone for dateTime is not defined'
 											)}
-											size={size}
-											param={paramId.value.unwrapOrGet(
-												undefined
-											)}
 										/>
 									);
 								}
 								case 'dateTimeConnector': {
-									return <chart.Component status={name()} />;
+									return <chart.Component status={name} />;
 								}
 								case 'addComment': {
 									return (
 										<chart.Component
-											id={id}
-											title={name()}
+											{...props}
 											value={Defined.parse(
 												node.data.comment
 											).orThrow(
 												'comment for addComment is not defined'
 											)}
 											onChange={nodestore.updateComment}
-											size={size}
-											param={paramId.value.unwrapOrGet(
-												undefined
-											)}
 										/>
 									);
 								}
 							}
 						})
 						.map(markRaw)
-						.orThrow(`chart for ${node.type} is not defined`);
+						.orThrow(`chart for "${node.type}" is not defined`);
 
 					return {
 						[node.type]: Component,
@@ -186,34 +182,12 @@ const Home = defineComponent({
 				);
 		});
 
-		// const edgeTypes = computed(() => {
-		// 			return edges.value
-		// 				.map((edge) => {
-		// 					const Component = Defined.parse(
-		// 						charts.find((chart) => {
-		// 							return edge.type.startsWith(`${chart.type}-`);
-		// 						})
-		// 					)
-		// 						.map((chart) => {
-
-		// 						})
-
-		// 					return {
-		// 						[edge.type]: Component,
-		// 					};
-		// 				})
-		// 		})
-
 		const nodesFlowChart = computed(() => {
-			return nodes.value.map((node, index) => {
+			return generateNodesPositions(nodes.value, size).map((node) => {
 				return {
 					...node,
 					id: node.id.toString(),
 					parentNode: node.parentNode?.toString(),
-					position: {
-						x: 50 * index,
-						y: 50 * index,
-					},
 				} satisfies Node;
 			});
 		});
@@ -311,7 +285,7 @@ const Home = defineComponent({
 															time.endTime,
 														]}
 														style={{
-															width: '200px',
+															width: '150px',
 														}}
 														use12Hours={false}
 														onChange={(value) => {

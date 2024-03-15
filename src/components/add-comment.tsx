@@ -1,12 +1,11 @@
 import { computed, defineComponent, type PropType } from 'vue';
 
-import { Flex, Input, TypographyText } from 'ant-design-vue';
+import { Flex, TypographyText } from 'ant-design-vue';
 
 import { ChatBubbleBottomCenterIcon } from '@heroicons/vue/24/outline';
 
-import { Defined } from '@poolofdeath20/util';
-
 import { AbstractNode, props, childProps, isCurrentId } from './abstract';
+import { TextInput } from './input';
 
 const AddComment = () => {
 	return {
@@ -46,25 +45,10 @@ const AddComment = () => {
 							return (
 								<Flex vertical>
 									<TypographyText>Title</TypographyText>
-									<Input
+									<TextInput
 										placeholder="Add a title"
 										value={props.title}
-										onChange={(event) => {
-											const name = Defined.parse(
-												event.target
-											)
-												.map((target) => {
-													return Defined.parse(
-														target.value
-													);
-												})
-												.orThrow(
-													'target of event title input is undefined'
-												)
-												.orThrow(
-													'value of target of event title input is undefined'
-												);
-
+										onChange={(name) => {
 											props.onChange({
 												name,
 												comment: props.value,
@@ -72,25 +56,10 @@ const AddComment = () => {
 										}}
 									/>
 									<TypographyText>Comment</TypographyText>
-									<Input
+									<TextInput
 										placeholder="Add a comment"
 										value={props.value}
-										onChange={(event) => {
-											const comment = Defined.parse(
-												event.target
-											)
-												.map((target) => {
-													return Defined.parse(
-														target.value
-													);
-												})
-												.orThrow(
-													'target of event comment input is undefined'
-												)
-												.orThrow(
-													'value of target of event comment input is undefined'
-												);
-
+										onChange={(comment) => {
 											props.onChange({
 												name: props.title,
 												comment,
