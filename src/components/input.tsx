@@ -16,8 +16,12 @@ const TextInput = defineComponent({
 					type="text"
 					value={props.value}
 					style={{
+						borderRadius: '8px',
 						width: '50px',
-						padding: '8px 16px',
+						padding: '8px 12px',
+						border: '1px solid #C1C1C1',
+						fontSize: '1em',
+						textAlign: 'center',
 					}}
 				/>
 			);

@@ -12,7 +12,7 @@ const router = createRouter({
 		{
 			path: '/node/:id',
 			component: () => {
-				return import('../views/home');
+				return import('../views/node/[id]');
 			},
 		},
 	],

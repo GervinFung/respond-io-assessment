@@ -1,6 +1,8 @@
 import { computed, defineComponent, markRaw } from 'vue';
 import type { JSX } from 'vue/jsx-runtime';
 
+import { useRoute } from 'vue-router';
+
 import { VueFlow, type Node, type Edge } from '@vue-flow/core';
 import { Background } from '@vue-flow/background';
 import { MiniMap } from '@vue-flow/minimap';
@@ -11,11 +13,13 @@ import '@vue-flow/core/dist/theme-default.css';
 import '@fontsource-variable/inter/slnt.css';
 import '@fontsource-variable/inter';
 
+import { storeToRefs } from 'pinia';
+
+import moment from 'moment';
+import 'moment-timezone';
+
 import { Defined, Optional, capitalize } from '@poolofdeath20/util';
 
-import { useRoute } from 'vue-router';
-
-import nodes from '../data/nodes';
 import { TextInput } from '../components/input';
 import { ConversationTrigger } from '../components/trigger';
 import { SendMessage } from '../components/send-message';
@@ -23,6 +27,7 @@ import { DateTime } from '../components/date-time';
 import { DateTimeConnector } from '../components/date-time-connector';
 import { AddComment } from '../components/add-comment';
 import useNodeStore from '../stores/nodes';
+import { generateNodesPositions } from '../logic/util';
 
 const Home = defineComponent({
 	name: 'home',
@@ -48,11 +53,24 @@ const Home = defineComponent({
 			height: 100,
 		};
 
-		const elements = useNodeStore(size)();
+		const nodestore = useNodeStore();
+		const { nodeList } = storeToRefs(nodestore);
 
-		const getElementName = (
-			element: (typeof elements.$state.nodeList)[0]
-		) => {
+        generateNodesPositions(nodeList.value, size);
+
+		const elements = computed(() => {
+			return nodeList.value.map((node, index) => {
+				return {
+					...node,
+					position: {
+						x: 50 * index,
+						y: 50 * index,
+					},
+				};
+			});
+		});
+
+		const getElementName = (element: (typeof elements.value)[0]) => {
 			return () => {
 				return Defined.parse(element.name).orThrow(
 					`name for ${element.type} is not defined`
@@ -68,109 +86,127 @@ const Home = defineComponent({
 			AddComment(),
 		];
 
-		const nodeTypes = elements.$state.nodeList
-			.map((element) => {
-				const Component = Defined.parse(
-					charts.find((chart) => {
-						return element.type.startsWith(`${chart.type}-`);
-					})
-				)
-					.map((chart) => {
-						const name = getElementName(element);
-
-						const id = element.id.toString();
-
-						switch (chart.type) {
-							case 'trigger': {
-								return (
-									<chart.Component
-										id={id}
-										value="Conversation Opened"
-										size={size}
-										param={paramId.unwrapOrGet(undefined)}
-									/>
-								);
-							}
-							case 'sendMessage': {
-								return (
-									<chart.Component
-										id={id}
-										title={name()}
-										value={Defined.parse(
-											element.data.payload?.at(0)?.text
-										).orThrow(
-											'text for sendMessage is not defined'
-										)}
-										size={size}
-										param={paramId.unwrapOrGet(undefined)}
-									/>
-								);
-							}
-							case 'dateTime': {
-								return (
-									<chart.Component
-										id={id}
-										title={name()}
-										value={Defined.parse(
-											element.timezone
-										).orThrow(
-											'timezone for dateTime is not defined'
-										)}
-										size={size}
-										param={paramId.unwrapOrGet(undefined)}
-									/>
-								);
-							}
-							case 'dateTimeConnector': {
-								return <chart.Component status={name()} />;
-							}
-							case 'addComment': {
-								return (
-									<chart.Component
-										id={id}
-										title={name()}
-										value={Defined.parse(
-											element.data.comment
-										).orThrow(
-											'comment for addComment is not defined'
-										)}
-										size={size}
-										param={paramId.unwrapOrGet(undefined)}
-									/>
-								);
-							}
-						}
-					})
-					.map(markRaw)
-					.orThrow(`chart for ${element.type} is not defined`);
-
-				return {
-					[element.type]: Component,
-				};
+		const businessHours = Defined.parse(
+			nodeList.value.find((node) => {
+				return node.name === 'Business Hours';
 			})
-			.reduce(
-				(accumulator, current) => {
+		).orThrow('Business Hours is not defined');
+
+		const nodeTypes = computed(() => {
+			return elements.value
+				.map((element) => {
+					const Component = Defined.parse(
+						charts.find((chart) => {
+							return element.type.startsWith(`${chart.type}-`);
+						})
+					)
+						.map((chart) => {
+							const name = getElementName(element);
+
+							const id = element.id.toString();
+
+							switch (chart.type) {
+								case 'trigger': {
+									return (
+										<chart.Component
+											id={id}
+											value="Conversation Opened"
+											size={size}
+											param={paramId.unwrapOrGet(
+												undefined
+											)}
+										/>
+									);
+								}
+								case 'sendMessage': {
+									return (
+										<chart.Component
+											id={id}
+											title={name()}
+											value={Defined.parse(
+												element.data.payload?.at(0)
+													?.text
+											).orThrow(
+												'text for sendMessage is not defined'
+											)}
+											size={size}
+											param={paramId.unwrapOrGet(
+												undefined
+											)}
+										/>
+									);
+								}
+								case 'dateTime': {
+									return (
+										<chart.Component
+											key={businessHours.timezone}
+											id={id}
+											title={name()}
+											value={Defined.parse(
+												element.timezone
+											).orThrow(
+												'timezone for dateTime is not defined'
+											)}
+											size={size}
+											param={paramId.unwrapOrGet(
+												undefined
+											)}
+										/>
+									);
+								}
+								case 'dateTimeConnector': {
+									return <chart.Component status={name()} />;
+								}
+								case 'addComment': {
+									return (
+										<chart.Component
+											id={id}
+											title={name()}
+											value={Defined.parse(
+												element.data.comment
+											).orThrow(
+												'comment for addComment is not defined'
+											)}
+											size={size}
+											param={paramId.unwrapOrGet(
+												undefined
+											)}
+										/>
+									);
+								}
+							}
+						})
+						.map(markRaw)
+						.orThrow(`chart for ${element.type} is not defined`);
+
 					return {
-						...accumulator,
-						...current,
+						[element.type]: Component,
 					};
-				},
-				{} as Record<string, JSX.Element>
-			);
+				})
+				.reduce(
+					(accumulator, current) => {
+						return {
+							...accumulator,
+							...current,
+						};
+					},
+					{} as Record<string, JSX.Element>
+				);
+		});
 
 		const nodesFlowChart = computed(() => {
-			return elements.$state.nodeList.map((node) => {
+			return elements.value.map((node) => {
 				return {
 					...node,
 					id: node.id.toString(),
 					parentNode: node.parentNode?.toString(),
-					position: node.computedPosition,
+					position: node.position,
 				} satisfies Node;
 			});
 		});
 
 		const edgesFlowChart = computed(() => {
-			return elements.$state.nodeList.map((node) => {
+			return elements.value.map((node) => {
 				const source = node.parentNode?.toString() ?? '';
 				const target = node.id?.toString() ?? '';
 
@@ -205,14 +241,14 @@ const Home = defineComponent({
 						style={{
 							height: '100%',
 							width: '80%',
-							border: '1px solid gray',
+							borderRight: '1px solid #C1C1C1',
 						}}
 					>
 						<VueFlow
+							fitViewOnInit
 							nodes={nodesFlowChart.value}
 							edges={edgesFlowChart.value}
-							fitViewOnInit
-							nodeTypes={nodeTypes}
+							nodeTypes={nodeTypes.value}
 						>
 							<Background pattern-color="#121212" gap={24} />
 							<MiniMap />
@@ -226,71 +262,151 @@ const Home = defineComponent({
 							gap: '16px',
 						}}
 					>
-						<h1
-							style={{
-								margin: '0px',
-							}}
-						>
-							Business Hours
-						</h1>
 						<div
 							style={{
-								borderBottom: '1px solid grey',
+								padding: '12px',
+								borderBottom: '1px solid #C1C1C1',
 							}}
-						/>
+						>
+							<h1
+								style={{
+									margin: '0px',
+								}}
+							>
+								Business Hours
+							</h1>
+						</div>
 						<div
 							style={{
 								display: 'flex',
 								flexDirection: 'column',
-								alignItems: 'center',
-								gap: '8px',
+								alignItems: 'flex-start',
+								gap: '16px',
+								padding: '12px',
 							}}
 						>
-							{Defined.parse(
-								nodes.find((node) => {
-									return node.name === 'Business Hours';
-								})
-							)
-								.map((node) => {
-									return Defined.parse(
-										node.data.times
-									).orThrow(
-										'Data at index 2 does not have a times property'
-									);
-								})
+							{Defined.parse(businessHours.data.times)
 								.map((times) => {
 									return times.map((time) => {
 										return (
 											<div
 												style={{
 													display: 'flex',
-													alignItems: 'center',
-													gap: '16px',
+													flexDirection: 'column',
+													alignItems: 'flex-start',
 												}}
 											>
-												<p
+												<div
 													style={{
-														fontWeight: 'bold',
+														fontWeight: 500,
 													}}
 												>
 													{capitalize(time.day)}
-												</p>
-												<TextInput
-													value={time.startTime}
-													onChange={(startTime) => {
-														time.startTime =
-															startTime;
+												</div>
+												<div
+													style={{
+														display: 'flex',
+														alignItems: 'center',
+														gap: '8px',
 													}}
-												/>
-												<p>to</p>
-												<TextInput
-													value={time.endTime}
-												/>
+												>
+													<TextInput
+														value={time.startTime}
+														onChange={(
+															startTime
+														) => {
+															time.startTime =
+																startTime;
+														}}
+													/>
+													<p>-</p>
+													<TextInput
+														value={time.endTime}
+													/>
+												</div>
 											</div>
 										);
 									});
 								})
-								.orThrow('Business Hours is not defined')}
+								.orThrow(
+									'Data at index 2 does not have a times property'
+								)}
+						</div>
+						<div
+							style={{
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'flex-start',
+								gap: '16px',
+								padding: '12px',
+							}}
+						>
+							<div>Timezone</div>
+							<select
+								style={{
+									padding: '8px 12px',
+								}}
+								value={businessHours.timezone}
+								onChange={(event) => {
+									const timezone = Defined.parse(event.target)
+										.map((target) => {
+											if (
+												'value' in target &&
+												typeof target.value === 'string'
+											) {
+												return target.value;
+											}
+
+											throw new Error(
+												'event.target.value is not defined'
+											);
+										})
+										.orThrow(
+											'event.target of select is null'
+										);
+
+									nodestore.$patch((state) => {
+										const index = state.nodeList.findIndex(
+											(node) => {
+												return (
+													node.name ===
+													'Business Hours'
+												);
+											}
+										);
+
+										state.nodeList[index].timezone =
+											timezone;
+									});
+								}}
+							>
+								{moment.tz
+									.names()
+									.map((name) => {
+										const offset = moment
+											.tz(name)
+											.utcOffset();
+
+										return {
+											name,
+											offset,
+										};
+									})
+									.sort((a, b) => {
+										return a.offset - b.offset;
+									})
+									.map(({ name }) => {
+										const timezone = moment
+											.tz(name)
+											.format('Z');
+
+										return (
+											<option value={name}>
+												(GMT{timezone}) {name}
+											</option>
+										);
+									})}
+							</select>
 						</div>
 					</div>
 				</div>

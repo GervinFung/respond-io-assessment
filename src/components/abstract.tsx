@@ -15,7 +15,7 @@ const props = {
 					id: string;
 			  }>
 		>,
-		required: true,
+		required: false,
 	},
 	title: {
 		type: String,
