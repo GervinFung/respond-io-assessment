@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia';
 
-import { Defined } from '@poolofdeath20/util';
+import { Defined, type Return } from '@poolofdeath20/util';
 
 import nodes from '../data/nodes';
+
+import { type Payload } from '../components/send-message';
 
 const useNodeStore = defineStore('nodes', {
 	state: () => {
@@ -53,12 +55,10 @@ const useNodeStore = defineStore('nodes', {
 				'Times are not defined'
 			);
 		},
-		comment: (state) => {
-			return Defined.parse(
-				state.nodes.find((node) => {
-					return node.type.startsWith('addComment');
-				})
-			).orThrow('Comment is not defined');
+		comments: (state) => {
+			return state.nodes.filter((node) => {
+				return node.type.startsWith('addComment');
+			});
 		},
 		trigger: (state) => {
 			return Defined.parse(
@@ -66,6 +66,11 @@ const useNodeStore = defineStore('nodes', {
 					return node.type.startsWith('trigger');
 				})
 			).orThrow('Trigger is not defined');
+		},
+		sendMessages: (state) => {
+			return state.nodes.filter((node) => {
+				return node.type.startsWith('sendMessage');
+			});
 		},
 	},
 	actions: {
@@ -91,14 +96,21 @@ const useNodeStore = defineStore('nodes', {
 		},
 		updateComment(
 			props: Readonly<{
+				id: string;
 				name: string;
 				comment: string;
 			}>
 		) {
 			// idk why pinia auto passes an event object when clicking outside
 			if (!(props instanceof Event)) {
-				this.comment.data.comment = props.comment;
-				this.comment.name = props.name;
+				const comment = Defined.parse(
+					this.comments.find((comment) => {
+						return comment.id === props.id;
+					})
+				).orThrow(`Comment node with id of "${props.id}" not found`);
+
+				comment.data.comment = props.comment;
+				comment.name = props.name;
 			}
 		},
 		updateTrigger(
@@ -113,7 +125,32 @@ const useNodeStore = defineStore('nodes', {
 				this.trigger.name = props.title;
 			}
 		},
+		updateSendMessages(
+			props: Readonly<{
+				id: string;
+				name: string;
+				payload: Payload;
+			}>
+		) {
+			// idk why pinia auto passes an event object when clicking outside
+			if (!(props instanceof Event)) {
+				const sendMessage = Defined.parse(
+					this.sendMessages.find((message) => {
+						return message.id === props.id;
+					})
+				).orThrow(
+					`SendMessage node with id of "${props.id}" not found`
+				);
+
+				sendMessage.data.payload = props.payload.slice();
+				sendMessage.name = props.name;
+			}
+		},
 	},
 });
+
+type NodeStore = Return<typeof useNodeStore>;
+
+export type { NodeStore };
 
 export default useNodeStore;

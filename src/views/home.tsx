@@ -7,17 +7,7 @@ import { VueFlow, type Node, type Edge } from '@vue-flow/core';
 import { Background } from '@vue-flow/background';
 import { MiniMap } from '@vue-flow/minimap';
 
-import {
-	TimeRangePicker,
-	Select,
-	SelectOption,
-	TypographyTitle,
-	Divider,
-	Col,
-	Row,
-	Flex,
-	TypographyText,
-} from 'ant-design-vue';
+import { Flex } from 'ant-design-vue';
 
 import '@vue-flow/core/dist/style.css';
 import '@vue-flow/core/dist/theme-default.css';
@@ -27,10 +17,7 @@ import '@fontsource-variable/inter';
 
 import { storeToRefs } from 'pinia';
 
-import moment from 'moment';
-import 'moment-timezone';
-
-import { Defined, Optional, capitalize } from '@poolofdeath20/util';
+import { Defined, Optional } from '@poolofdeath20/util';
 
 import { ConversationTrigger } from '../components/trigger';
 import { SendMessage } from '../components/send-message';
@@ -46,19 +33,13 @@ const Home = defineComponent({
 		const route = useRoute();
 
 		const paramId = computed(() => {
-			return Optional.from(route.params.id)
-				.flatMap((id) => {
-					if (typeof id === 'string') {
-						return Optional.some(id);
-					}
+			return Optional.from(route.params.id).flatMap((id) => {
+				if (typeof id === 'string') {
+					return Optional.some(id);
+				}
 
-					return Optional.none<string>();
-				})
-				.map((id) => {
-					return {
-						id,
-					};
-				});
+				return Optional.none<string>();
+			});
 		});
 
 		const size = {
@@ -99,12 +80,9 @@ const Home = defineComponent({
 
 							const id = node.id.toString();
 
-							const param = paramId.value.unwrapOrGet(undefined);
-
 							const props = {
 								id,
 								title: name,
-								param,
 								size,
 							};
 
@@ -126,6 +104,9 @@ const Home = defineComponent({
 									return (
 										<chart.Component
 											{...props}
+											onChange={
+												nodestore.updateSendMessages
+											}
 											payload={Defined.parse(
 												node.data.payload
 											)
@@ -185,7 +166,6 @@ const Home = defineComponent({
 											).orThrow(
 												'comment for addComment is not defined'
 											)}
-											onChange={nodestore.updateComment}
 										/>
 									);
 								}
@@ -224,20 +204,127 @@ const Home = defineComponent({
 				return {
 					...edges,
 					type: 'smoothstep',
-					label: <p>hihi</p>,
-					labelStyle: {
-						fill: 'black',
-						color: 'black',
-						fontWeight: 'bold',
-					},
 				} satisfies Edge;
 			});
 		});
 
-		const grid = {
-			rowLength: 24,
-			vueFlow: 20,
-		};
+		const drawers = computed(() => {
+			return nodes.value.map((node) => {
+				const Component = Defined.parse(
+					charts.find((chart) => {
+						return (
+							node.type === chart.type ||
+							node.type.startsWith(`${chart.type}-`)
+						);
+					})
+				)
+					.map((chart) => {
+						const name = getElementName(node);
+
+						const id = node.id.toString();
+
+						const props = {
+							paramId: paramId.value,
+							id,
+							title: name,
+						};
+
+						switch (chart.type) {
+							case 'trigger': {
+								return (
+									<chart.Drawer
+										{...props}
+										value={Defined.parse(
+											node.data.type
+										).orThrow(
+											'type for trigger is not defined'
+										)}
+										onChange={nodestore.updateTrigger}
+									/>
+								);
+							}
+							case 'sendMessage': {
+								return (
+									<chart.Drawer
+										{...props}
+										onChange={nodestore.updateSendMessages}
+										payload={Defined.parse(
+											node.data.payload
+										)
+											.map((payload) => {
+												return payload.map(
+													(payload) => {
+														if (payload.text) {
+															return {
+																type: 'text',
+																text: payload.text,
+															} as const;
+														}
+
+														if (
+															payload.attachment
+														) {
+															return {
+																type: 'attachment',
+																attachment:
+																	payload.attachment,
+															} as const;
+														}
+
+														throw new Error(
+															'payload for sendMessage is not defined'
+														);
+													}
+												);
+											})
+											.orThrow(
+												'payload for sendMessage is not defined'
+											)}
+									/>
+								);
+							}
+							case 'dateTime': {
+								return (
+									<chart.Drawer
+										{...props}
+										businessHourTimes={
+											nodestore.businessHourTimes
+										}
+										businessHourTimezone={
+											nodestore.businessHourTimezone
+										}
+										updateTimezone={
+											nodestore.updateTimezone
+										}
+										updateBusinessHourTimes={
+											nodestore.updateBusinessHourTimes
+										}
+									/>
+								);
+							}
+							case 'addComment': {
+								return (
+									<chart.Drawer
+										{...props}
+										value={Defined.parse(
+											node.data.comment
+										).orThrow(
+											'comment for addComment is not defined'
+										)}
+										onChange={nodestore.updateComment}
+									/>
+								);
+							}
+							case 'dateTimeConnector': {
+								return <></>;
+							}
+						}
+					})
+					.orThrow(`chart for "${node.type}" is not defined`);
+
+				return Component;
+			});
+		});
 
 		return () => {
 			return (
@@ -249,141 +336,19 @@ const Home = defineComponent({
 						width: '100%',
 					}}
 				>
-					<Row
-						style={{
-							width: '100%',
+					<VueFlow
+						fitViewOnInit
+						nodes={nodesFlowChart.value}
+						edges={edgesFlowChart.value}
+						nodeTypes={nodeTypes.value}
+						onNodeDrag={({ node }) => {
+							console.log(node);
 						}}
 					>
-						<Col span={grid.vueFlow}>
-							<div
-								style={{
-									height: '100%',
-									borderRight: '1px solid #C1C1C1',
-								}}
-							>
-								<VueFlow
-									fitViewOnInit
-									nodes={nodesFlowChart.value}
-									edges={edgesFlowChart.value}
-									nodeTypes={nodeTypes.value}
-								>
-									<Background
-										pattern-color="#121212"
-										gap={24}
-									/>
-									<MiniMap />
-								</VueFlow>
-							</div>
-						</Col>
-						<Col span={grid.rowLength - grid.vueFlow}>
-							<Flex
-								gap={8}
-								vertical
-								style={{
-									padding: '24px',
-								}}
-							>
-								<TypographyTitle
-									level={2}
-									// @ts-expect-error: Style doesn't exists for `TypographyTitle`, but injectable in runtime
-									style={{
-										margin: 0,
-									}}
-								>
-									Business Hours
-								</TypographyTitle>
-								<Divider />
-								<Flex vertical align="flex-start" gap={16}>
-									{nodestore.businessHourTimes.map(
-										(time, index) => {
-											return (
-												<Flex
-													vertical
-													align="flex-start"
-												>
-													<TypographyText>
-														{capitalize(time.day)}
-													</TypographyText>
-													<TimeRangePicker
-														valueFormat="HH:mm"
-														format="HH:mm"
-														value={[
-															time.startTime,
-															time.endTime,
-														]}
-														style={{
-															width: '150px',
-														}}
-														use12Hours={false}
-														onChange={(value) => {
-															nodestore.updateBusinessHourTimes(
-																index,
-																(
-																	value ?? []
-																).map(
-																	(time) => {
-																		return time?.toString();
-																	}
-																)
-															);
-														}}
-													/>
-												</Flex>
-											);
-										}
-									)}
-								</Flex>
-								<Divider />
-								<Flex align="flex-start" vertical>
-									<TypographyText>Timezone</TypographyText>
-									<Select
-										style={{
-											width: '200px',
-										}}
-										value={nodestore.businessHourTimezone}
-										onChange={(value) => {
-											const timezone = Defined.parse(
-												value
-											)
-												.orThrow(
-													'value for timezone is not defined'
-												)
-												.toString();
-
-											nodestore.updateTimezone(timezone);
-										}}
-									>
-										{moment.tz
-											.names()
-											.map((name) => {
-												const offset = moment
-													.tz(name)
-													.utcOffset();
-
-												return {
-													name,
-													offset,
-												};
-											})
-											.sort((a, b) => {
-												return a.offset - b.offset;
-											})
-											.map(({ name }) => {
-												const timezone = moment
-													.tz(name)
-													.format('Z');
-
-												return (
-													<SelectOption value={name}>
-														(GMT{timezone}) {name}
-													</SelectOption>
-												);
-											})}
-									</Select>
-								</Flex>
-							</Flex>
-						</Col>
-					</Row>
+						<Background pattern-color="#121212" gap={24} />
+						<MiniMap />
+					</VueFlow>
+					{drawers.value}
 				</Flex>
 			);
 		};

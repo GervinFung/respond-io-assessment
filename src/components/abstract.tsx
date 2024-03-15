@@ -11,14 +11,12 @@ import { RouterLink } from 'vue-router';
 
 import { Flex, TypographyTitle } from 'ant-design-vue';
 
-type Param =
-	| undefined
-	| Readonly<{
-			id: string;
-	  }>;
+import { equalTo, type Optional } from '@poolofdeath20/util';
 
-const isCurrentId = (id: string, param: Param) => {
-	return id === param?.id;
+type NullableId = Optional<string>;
+
+const isCurrentId = (id: string, anotherId: NullableId) => {
+	return anotherId.map(equalTo(id)).unwrapOrGet(false);
 };
 
 type Slots = Readonly<{
@@ -30,15 +28,15 @@ const childProps = {
 		type: String,
 		required: true,
 	},
+	paramId: {
+		type: Object as PropType<NullableId>,
+		required: true,
+	},
 } as const;
 
 const props = {
 	id: {
 		type: String,
-		required: true,
-	},
-	param: {
-		type: Object as PropType<Param>,
 		required: true,
 	},
 	title: {

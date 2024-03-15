@@ -13,7 +13,9 @@ const generateNodesPositions = <Nodes extends typeof nodes>(
 		height: number;
 	}>
 ): ReadonlyArray<
-	(typeof nodes)[0] & { position: Readonly<{ x: number; y: number }> }
+	(typeof nodes)[0] & {
+		position: Readonly<{ x: number; y: number }>;
+	}
 > => {
 	// Create a new directed graph
 	const graph = new dagre.graphlib.Graph();

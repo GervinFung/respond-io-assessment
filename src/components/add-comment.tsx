@@ -1,95 +1,101 @@
-import { computed, defineComponent, type PropType } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 
-import { Flex, TypographyText } from 'ant-design-vue';
+import { Drawer, Flex, TypographyText } from 'ant-design-vue';
 
 import { ChatBubbleBottomCenterIcon } from '@heroicons/vue/24/outline';
 
 import { AbstractNode, props, childProps, isCurrentId } from './abstract';
 import { TextField } from './input';
+import type { NodeStore } from '../stores/nodes';
+import { useDrawer } from '../logic/drawer';
+
+const Component = defineComponent({
+	props: {
+		id: props.id,
+		title: props.title,
+		value: childProps.value,
+		size: props.size,
+	},
+	setup(props) {
+		return () => {
+			return (
+				<AbstractNode
+					{...props}
+					icon={
+						<ChatBubbleBottomCenterIcon
+							style={{
+								width: '24px',
+							}}
+						/>
+					}
+				>
+					<TypographyText>{props.value}</TypographyText>
+				</AbstractNode>
+			);
+		};
+	},
+});
+
+const AddCommentDrawer = defineComponent({
+	props: {
+		id: props.id,
+		paramId: childProps.paramId,
+		title: props.title,
+		value: childProps.value,
+		onChange: {
+			type: Function as PropType<NodeStore['updateComment']>,
+			required: true,
+		},
+	},
+	setup(props) {
+		const drawer = useDrawer(() => {
+			return isCurrentId(props.id, props.paramId);
+		});
+
+		return () => {
+			return (
+				<Drawer
+					title="Add Comment Details"
+					open={drawer.open.value}
+					onClose={drawer.onClose}
+				>
+					<Flex vertical gap={8}>
+						<TextField
+							title="Title"
+							placeholder="Add a title"
+							value={props.title}
+							onChange={(name) => {
+								props.onChange({
+									id: props.id,
+									name,
+									comment: props.value,
+								});
+							}}
+						/>
+						<TextField
+							title="Comment"
+							placeholder="Add a comment"
+							value={props.value}
+							onChange={(comment) => {
+								props.onChange({
+									id: props.id,
+									name: props.title,
+									comment,
+								});
+							}}
+						/>
+					</Flex>
+				</Drawer>
+			);
+		};
+	},
+});
 
 const AddComment = () => {
 	return {
 		type: 'addComment',
-		Component: defineComponent({
-			props: {
-				id: props.id,
-				title: props.title,
-				value: childProps.value,
-				size: props.size,
-				param: props.param,
-				onChange: {
-					type: Function as PropType<
-						(
-							props: Readonly<{
-								name: string;
-								comment: string;
-							}>
-						) => void
-					>,
-					required: true,
-				},
-			},
-			setup(props) {
-				const isCurrent = computed(() => {
-					return isCurrentId(props.id, props.param);
-				});
-
-				const Slot = () => {
-					switch (isCurrent.value) {
-						case false: {
-							return (
-								<TypographyText>{props.value}</TypographyText>
-							);
-						}
-						case true: {
-							return (
-								<Flex vertical gap={8}>
-									<TextField
-										title="Title"
-										placeholder="Add a title"
-										value={props.title}
-										onChange={(name) => {
-											props.onChange({
-												name,
-												comment: props.value,
-											});
-										}}
-									/>
-									<TextField
-										title="Comment"
-										placeholder="Add a comment"
-										value={props.value}
-										onChange={(comment) => {
-											props.onChange({
-												name: props.title,
-												comment,
-											});
-										}}
-									/>
-								</Flex>
-							);
-						}
-					}
-				};
-
-				return () => {
-					return (
-						<AbstractNode
-							{...props}
-							icon={
-								<ChatBubbleBottomCenterIcon
-									style={{
-										width: '24px',
-									}}
-								/>
-							}
-						>
-							<Slot />
-						</AbstractNode>
-					);
-				};
-			},
-		}),
+		Component,
+		Drawer: AddCommentDrawer,
 	} as const;
 };
 
