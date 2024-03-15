@@ -7,6 +7,18 @@ import { VueFlow, type Node, type Edge } from '@vue-flow/core';
 import { Background } from '@vue-flow/background';
 import { MiniMap } from '@vue-flow/minimap';
 
+import {
+	TimeRangePicker,
+	Select,
+	SelectOption,
+	TypographyTitle,
+	Divider,
+	Col,
+	Row,
+	Flex,
+	TypographyText,
+} from 'ant-design-vue';
+
 import '@vue-flow/core/dist/style.css';
 import '@vue-flow/core/dist/theme-default.css';
 
@@ -20,7 +32,6 @@ import 'moment-timezone';
 
 import { Defined, Optional, capitalize } from '@poolofdeath20/util';
 
-import { TextInput } from '../components/input';
 import { ConversationTrigger } from '../components/trigger';
 import { SendMessage } from '../components/send-message';
 import { DateTime } from '../components/date-time';
@@ -56,7 +67,7 @@ const Home = defineComponent({
 		const nodestore = useNodeStore();
 		const { nodeList } = storeToRefs(nodestore);
 
-        generateNodesPositions(nodeList.value, size);
+		generateNodesPositions(nodeList.value, size);
 
 		const elements = computed(() => {
 			return nodeList.value.map((node, index) => {
@@ -85,12 +96,6 @@ const Home = defineComponent({
 			DateTimeConnector(),
 			AddComment(),
 		];
-
-		const businessHours = Defined.parse(
-			nodeList.value.find((node) => {
-				return node.name === 'Business Hours';
-			})
-		).orThrow('Business Hours is not defined');
 
 		const nodeTypes = computed(() => {
 			return elements.value
@@ -139,7 +144,7 @@ const Home = defineComponent({
 								case 'dateTime': {
 									return (
 										<chart.Component
-											key={businessHours.timezone}
+											key={nodestore.businessHourTimezone}
 											id={id}
 											title={name()}
 											value={Defined.parse(
@@ -225,6 +230,11 @@ const Home = defineComponent({
 			});
 		});
 
+		const grid = {
+			rowLength: 24,
+			vueFlow: 20,
+		};
+
 		return () => {
 			return (
 				<div
@@ -237,178 +247,155 @@ const Home = defineComponent({
 						gap: '8px',
 					}}
 				>
-					<div
+					<Row
 						style={{
-							height: '100%',
-							width: '80%',
-							borderRight: '1px solid #C1C1C1',
+							width: '100%',
 						}}
 					>
-						<VueFlow
-							fitViewOnInit
-							nodes={nodesFlowChart.value}
-							edges={edgesFlowChart.value}
-							nodeTypes={nodeTypes.value}
-						>
-							<Background pattern-color="#121212" gap={24} />
-							<MiniMap />
-						</VueFlow>
-					</div>
-					<div
-						style={{
-							display: 'flex',
-							flexDirection: 'column',
-							width: '20%',
-							gap: '16px',
-						}}
-					>
-						<div
-							style={{
-								padding: '12px',
-								borderBottom: '1px solid #C1C1C1',
-							}}
-						>
-							<h1
+						<Col span={grid.vueFlow}>
+							<div
 								style={{
-									margin: '0px',
+									height: '100%',
+									borderRight: '1px solid #C1C1C1',
 								}}
 							>
-								Business Hours
-							</h1>
-						</div>
-						<div
-							style={{
-								display: 'flex',
-								flexDirection: 'column',
-								alignItems: 'flex-start',
-								gap: '16px',
-								padding: '12px',
-							}}
-						>
-							{Defined.parse(businessHours.data.times)
-								.map((times) => {
-									return times.map((time) => {
-										return (
-											<div
-												style={{
-													display: 'flex',
-													flexDirection: 'column',
-													alignItems: 'flex-start',
-												}}
-											>
-												<div
-													style={{
-														fontWeight: 500,
-													}}
+								<VueFlow
+									fitViewOnInit
+									nodes={nodesFlowChart.value}
+									edges={edgesFlowChart.value}
+									nodeTypes={nodeTypes.value}
+								>
+									<Background
+										pattern-color="#121212"
+										gap={24}
+									/>
+									<MiniMap />
+								</VueFlow>
+							</div>
+						</Col>
+						<Col span={grid.rowLength - grid.vueFlow}>
+							<div
+								style={{
+									display: 'flex',
+									flexDirection: 'column',
+									padding: '24px',
+									gap: '8px',
+								}}
+							>
+								<TypographyTitle
+									level={2}
+									// @ts-expect-error: Style doesn't exists for `TypographyTitle`, but injectable in runtime
+									style={{
+										margin: 0,
+									}}
+								>
+									Business Hours
+								</TypographyTitle>
+								<Divider />
+								<div
+									style={{
+										display: 'flex',
+										flexDirection: 'column',
+										alignItems: 'flex-start',
+										gap: '16px',
+									}}
+								>
+									{nodestore.businessHourTimes.map(
+										(time, index) => {
+											return (
+												<Flex
+													vertical
+													align="flex-start"
 												>
-													{capitalize(time.day)}
-												</div>
-												<div
-													style={{
-														display: 'flex',
-														alignItems: 'center',
-														gap: '8px',
-													}}
-												>
-													<TextInput
-														value={time.startTime}
-														onChange={(
-															startTime
-														) => {
-															time.startTime =
-																startTime;
+													<TypographyText>
+														{capitalize(time.day)}
+													</TypographyText>
+													<TimeRangePicker
+														valueFormat="HH:mm"
+														format="HH:mm"
+														value={[
+															time.startTime,
+															time.endTime,
+														]}
+														style={{
+															width: '200px',
+														}}
+														use12Hours={false}
+														onChange={(value) => {
+															nodestore.updateBusinessHourTimes(
+																index,
+																(
+																	value ?? []
+																).map(
+																	(time) => {
+																		return time?.toString();
+																	}
+																)
+															);
 														}}
 													/>
-													<p>-</p>
-													<TextInput
-														value={time.endTime}
-													/>
-												</div>
-											</div>
-										);
-									});
-								})
-								.orThrow(
-									'Data at index 2 does not have a times property'
-								)}
-						</div>
-						<div
-							style={{
-								display: 'flex',
-								flexDirection: 'column',
-								alignItems: 'flex-start',
-								gap: '16px',
-								padding: '12px',
-							}}
-						>
-							<div>Timezone</div>
-							<select
-								style={{
-									padding: '8px 12px',
-								}}
-								value={businessHours.timezone}
-								onChange={(event) => {
-									const timezone = Defined.parse(event.target)
-										.map((target) => {
-											if (
-												'value' in target &&
-												typeof target.value === 'string'
-											) {
-												return target.value;
-											}
-
-											throw new Error(
-												'event.target.value is not defined'
+												</Flex>
 											);
-										})
-										.orThrow(
-											'event.target of select is null'
-										);
+										}
+									)}
+								</div>
+								<Divider />
+								<div
+									style={{
+										display: 'flex',
+										flexDirection: 'column',
+										alignItems: 'flex-start',
+									}}
+								>
+									<TypographyText>Timezone</TypographyText>
+									<Select
+										style={{
+											width: '200px',
+										}}
+										value={nodestore.businessHourTimezone}
+										onChange={(value) => {
+											const timezone = Defined.parse(
+												value
+											)
+												.orThrow(
+													'value for timezone is not defined'
+												)
+												.toString();
 
-									nodestore.$patch((state) => {
-										const index = state.nodeList.findIndex(
-											(node) => {
+											nodestore.updateTimezone(timezone);
+										}}
+									>
+										{moment.tz
+											.names()
+											.map((name) => {
+												const offset = moment
+													.tz(name)
+													.utcOffset();
+
+												return {
+													name,
+													offset,
+												};
+											})
+											.sort((a, b) => {
+												return a.offset - b.offset;
+											})
+											.map(({ name }) => {
+												const timezone = moment
+													.tz(name)
+													.format('Z');
+
 												return (
-													node.name ===
-													'Business Hours'
+													<SelectOption value={name}>
+														(GMT{timezone}) {name}
+													</SelectOption>
 												);
-											}
-										);
-
-										state.nodeList[index].timezone =
-											timezone;
-									});
-								}}
-							>
-								{moment.tz
-									.names()
-									.map((name) => {
-										const offset = moment
-											.tz(name)
-											.utcOffset();
-
-										return {
-											name,
-											offset,
-										};
-									})
-									.sort((a, b) => {
-										return a.offset - b.offset;
-									})
-									.map(({ name }) => {
-										const timezone = moment
-											.tz(name)
-											.format('Z');
-
-										return (
-											<option value={name}>
-												(GMT{timezone}) {name}
-											</option>
-										);
-									})}
-							</select>
-						</div>
-					</div>
+											})}
+									</Select>
+								</div>
+							</div>
+						</Col>
+					</Row>
 				</div>
 			);
 		};
