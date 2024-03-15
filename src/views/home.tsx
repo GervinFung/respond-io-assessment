@@ -17,7 +17,7 @@ import '@fontsource-variable/inter';
 
 import { storeToRefs } from 'pinia';
 
-import { Defined, Optional } from '@poolofdeath20/util';
+import { Defined, Optional, isNotUndefined } from '@poolofdeath20/util';
 
 import { ConversationTrigger } from '../components/trigger';
 import { SendMessage } from '../components/send-message';
@@ -26,6 +26,18 @@ import { DateTimeConnector } from '../components/date-time-connector';
 import { AddComment } from '../components/add-comment';
 import useNodeStore from '../stores/nodes';
 import { generateNodesPositions } from '../logic/util';
+
+type Type = Readonly<{
+	type: string;
+}>;
+
+const findMatchingNode = (left: Type) => {
+	return (right: Type) => {
+		return (
+			left.type === right.type || left.type.startsWith(`${right.type}-`)
+		);
+	};
+};
 
 const Home = defineComponent({
 	name: 'home',
@@ -64,19 +76,52 @@ const Home = defineComponent({
 			AddComment(),
 		];
 
+		const colorsWithType = charts
+			.map(({ type }) => {
+				switch (type) {
+					case 'trigger': {
+						return {
+							type,
+							color: '#D2678F',
+						};
+					}
+					case 'sendMessage': {
+						return {
+							type,
+							color: '#67B6AD',
+						};
+					}
+					case 'dateTimeConnector':
+					case 'dateTime': {
+						return {
+							type,
+							color: '#FFB8A3',
+						};
+					}
+					case 'addComment': {
+						return {
+							type,
+							color: '#A0A9D7',
+						};
+					}
+				}
+			})
+			.filter(isNotUndefined);
+
 		const nodeTypes = computed(() => {
 			return nodes.value
 				.map((node) => {
 					const Component = Defined.parse(
-						charts.find((chart) => {
-							return (
-								node.type === chart.type ||
-								node.type.startsWith(`${chart.type}-`)
-							);
-						})
+						charts.find(findMatchingNode(node))
 					)
 						.map((chart) => {
 							const name = getElementName(node);
+
+							const { color } = Defined.parse(
+								colorsWithType.find(findMatchingNode(node))
+							).orThrow(
+								`color for "${node.type}" is not defined`
+							);
 
 							const id = node.id.toString();
 
@@ -84,6 +129,7 @@ const Home = defineComponent({
 								id,
 								title: name,
 								size,
+								color,
 							};
 
 							switch (chart.type) {
@@ -200,10 +246,14 @@ const Home = defineComponent({
 		});
 
 		const edgesFlowChart = computed(() => {
-			return edges.value.map((edges) => {
+			return edges.value.map((edge) => {
 				return {
-					...edges,
+					...edge,
 					type: 'smoothstep',
+					style: {
+						stroke: colorsWithType.find(findMatchingNode(edge))
+							?.color,
+					},
 				} satisfies Edge;
 			});
 		});

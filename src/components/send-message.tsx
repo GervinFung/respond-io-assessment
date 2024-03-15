@@ -47,6 +47,7 @@ const Component = defineComponent({
 		id: props.id,
 		title: props.title,
 		size: props.size,
+		color: childProps.color,
 		payload: {
 			type: Array as PropType<Payload>,
 			required: true,
@@ -73,6 +74,7 @@ const Component = defineComponent({
 						<ChatBubbleLeftIcon
 							style={{
 								width: '24px',
+								color: props.color,
 							}}
 						/>
 					}

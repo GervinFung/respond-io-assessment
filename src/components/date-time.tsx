@@ -26,6 +26,7 @@ const Component = defineComponent({
 		id: props.id,
 		title: props.title,
 		value: childProps.value,
+		color: childProps.color,
 		size: props.size,
 	},
 	setup(props) {
@@ -37,6 +38,7 @@ const Component = defineComponent({
 						<CalendarIcon
 							style={{
 								width: '24px',
+								color: props.color,
 							}}
 						/>
 					}

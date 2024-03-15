@@ -32,6 +32,10 @@ const childProps = {
 		type: Object as PropType<NullableId>,
 		required: true,
 	},
+	color: {
+		type: String,
+		required: true,
+	},
 } as const;
 
 const props = {

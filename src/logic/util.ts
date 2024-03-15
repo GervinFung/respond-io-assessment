@@ -4,16 +4,16 @@ import { Position } from '@vue-flow/core';
 
 import { Defined } from '@poolofdeath20/util';
 
-import type nodes from '../data/nodes';
+import type { NodeStore } from '../stores/nodes';
 
-const generateNodesPositions = <Nodes extends typeof nodes>(
-	nodeList: Nodes,
+const generateNodesPositions = <Nodes extends NodeStore['nodes']>(
+	nodes: Nodes,
 	size: Readonly<{
 		width: number;
 		height: number;
 	}>
 ): ReadonlyArray<
-	(typeof nodes)[0] & {
+	Nodes[0] & {
 		position: Readonly<{ x: number; y: number }>;
 	}
 > => {
@@ -30,7 +30,7 @@ const generateNodesPositions = <Nodes extends typeof nodes>(
 		return {};
 	});
 
-	nodeList.forEach((node) => {
+	nodes.forEach((node) => {
 		graph.setNode(node.id.toString(), {
 			label: node.id.toString(),
 			width: size.width,
@@ -38,7 +38,7 @@ const generateNodesPositions = <Nodes extends typeof nodes>(
 		});
 	});
 
-	nodeList.forEach((node) => {
+	nodes.forEach((node) => {
 		if (node.parentNode) {
 			graph.setEdge(node.parentNode.toString(), node.id.toString());
 		}
@@ -56,7 +56,7 @@ const generateNodesPositions = <Nodes extends typeof nodes>(
 		};
 	});
 
-	return nodeList.map((node) => {
+	return nodes.map((node) => {
 		return Defined.parse(
 			nodesPosition.find((position) => {
 				return position.label === node.id.toString();
