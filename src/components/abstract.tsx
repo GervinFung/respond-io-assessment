@@ -7,11 +7,15 @@ import {
 } from 'vue';
 import type { JSX } from 'vue/jsx-runtime';
 
+import { Handle, Position } from '@vue-flow/core';
+
 import { RouterLink } from 'vue-router';
 
 import { Flex, TypographyTitle } from 'ant-design-vue';
 
 import { equalTo, type Optional } from '@poolofdeath20/util';
+
+import type { NodeStore } from '../stores/nodes';
 
 type NullableId = Optional<string>;
 
@@ -34,6 +38,10 @@ const childProps = {
 	},
 	color: {
 		type: String,
+		required: true,
+	},
+	onDelete: {
+		type: Function as PropType<NodeStore['deleteNode']>,
 		required: true,
 	},
 } as const;
@@ -71,54 +79,58 @@ const AbstractNode = defineComponent({
 			};
 
 			return (
-				<RouterLink
-					to={`/node/${props.id}`}
-					style={{
-						textDecoration: 'none',
-					}}
-				>
-					<Flex
-						vertical
+				<>
+					<Handle type="target" position={Position.Top} />
+					<Handle type="source" position={Position.Bottom} />
+					<RouterLink
+						to={`/node/${props.id}`}
 						style={{
-							color: '#121212',
-							borderRadius: '8px',
-							border: `1px solid ${style.borderColor}`,
-							minHeight: `${props.size.height}px`,
-							width: `${props.size.width}px`,
-							backgroundColor: '#FEFEFE',
-							cursor: 'pointer',
+							textDecoration: 'none',
 						}}
 					>
 						<Flex
-							gap={8}
-							align="center"
+							vertical
 							style={{
-								padding: `${style.padding}px`,
-								borderBottom: `1px solid ${style.borderColor}`,
+								color: '#121212',
+								borderRadius: '8px',
+								border: `1px solid ${style.borderColor}`,
+								minHeight: `${props.size.height}px`,
+								width: `${props.size.width}px`,
+								backgroundColor: '#FEFEFE',
+								cursor: 'pointer',
 							}}
 						>
-							{props.icon}
-							<Flex>
-								<TypographyTitle
-									level={5}
-									// @ts-expect-error: Style doesn't exists for `TypographyTitle`, but injectable in runtime
-									style={{
-										margin: 0,
-									}}
-								>
-									{props.title}
-								</TypographyTitle>
+							<Flex
+								gap={8}
+								align="center"
+								style={{
+									padding: `${style.padding}px`,
+									borderBottom: `1px solid ${style.borderColor}`,
+								}}
+							>
+								{props.icon}
+								<Flex>
+									<TypographyTitle
+										level={5}
+										// @ts-expect-error: Style doesn't exists for `TypographyTitle`, but injectable in runtime
+										style={{
+											margin: 0,
+										}}
+									>
+										{props.title}
+									</TypographyTitle>
+								</Flex>
 							</Flex>
+							<div
+								style={{
+									padding: `${style.padding}px`,
+								}}
+							>
+								{context.slots.default?.()}
+							</div>
 						</Flex>
-						<div
-							style={{
-								padding: `${style.padding}px`,
-							}}
-						>
-							{context.slots.default?.()}
-						</div>
-					</Flex>
-				</RouterLink>
+					</RouterLink>
+				</>
 			);
 		};
 	},

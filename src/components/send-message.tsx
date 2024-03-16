@@ -7,6 +7,7 @@ import {
 	Button,
 	Upload,
 	Drawer,
+	Divider,
 } from 'ant-design-vue';
 
 import { ChatBubbleLeftIcon } from '@heroicons/vue/24/outline';
@@ -17,6 +18,8 @@ import { AbstractNode, childProps, isCurrentId, props } from './abstract';
 import { TextField, TextInput } from './input';
 import type { NodeStore } from '../stores/nodes';
 import { useDrawer } from '../logic/drawer';
+import { Toolbar } from './toolbar';
+import { DeleteNode } from './delete-node';
 
 type Payload = Array<
 	| {
@@ -68,46 +71,49 @@ const Component = defineComponent({
 	setup(props) {
 		return () => {
 			return (
-				<AbstractNode
-					{...props}
-					icon={
-						<ChatBubbleLeftIcon
-							style={{
-								width: '24px',
-								color: props.color,
-							}}
-						/>
-					}
-				>
-					<Flex vertical>
-						{Defined.parse(props.payload.at(0))
-							.map((payload) => {
-								switch (payload.type) {
-									case 'text': {
-										return (
-											<>
-												<TypographyText>
-													Message:
-												</TypographyText>
-												<TypographyText mark>
-													{payload.text}
-												</TypographyText>
-											</>
-										);
+				<>
+					<Toolbar />
+					<AbstractNode
+						{...props}
+						icon={
+							<ChatBubbleLeftIcon
+								style={{
+									width: '24px',
+									color: props.color,
+								}}
+							/>
+						}
+					>
+						<Flex vertical>
+							{Defined.parse(props.payload.at(0))
+								.map((payload) => {
+									switch (payload.type) {
+										case 'text': {
+											return (
+												<>
+													<TypographyText>
+														Message:
+													</TypographyText>
+													<TypographyText mark>
+														{payload.text}
+													</TypographyText>
+												</>
+											);
+										}
+										case 'attachment': {
+											return (
+												<Image
+													src={payload.attachment}
+													alt="attachment"
+												/>
+											);
+										}
 									}
-									case 'attachment': {
-										return (
-											<Image
-												src={payload.attachment}
-												alt="attachment"
-											/>
-										);
-									}
-								}
-							})
-							.orThrow('first payload is undefined')}
-					</Flex>
-				</AbstractNode>
+								})
+								.orThrow('first payload is undefined')}
+						</Flex>
+					</AbstractNode>
+				</>
 			);
 		};
 	},
@@ -123,9 +129,10 @@ const SendMessageDrawer = defineComponent({
 			required: true,
 		},
 		onChange: {
-			type: Function as PropType<NodeStore['updateSendMessages']>,
+			type: Function as PropType<NodeStore['updateSendMessage']>,
 			required: true,
 		},
+		onDelete: childProps.onDelete,
 	},
 	setup(props) {
 		const drawer = useDrawer(() => {
@@ -244,25 +251,35 @@ const SendMessageDrawer = defineComponent({
 					open={drawer.open.value}
 					onClose={drawer.onClose}
 				>
-					<Flex vertical gap={8}>
-						<TextField
-							title="Title"
-							placeholder="Add a title"
-							value={props.title}
-							onChange={(name) => {
-								props.onChange({
-									id: props.id,
-									name,
-									payload: props.payload,
-								});
-							}}
-						/>
-						<Flex vertical>
-							<TypographyText>Payloads</TypographyText>
-							<Flex vertical gap={4}>
-								{Payloads}
+					<Flex
+						gap={8}
+						vertical
+						style={{
+							padding: '8px',
+						}}
+					>
+						<Flex vertical gap={16}>
+							<TextField
+								title="Title"
+								placeholder="Add a title"
+								value={props.title}
+								onChange={(name) => {
+									props.onChange({
+										id: props.id,
+										name,
+										payload: props.payload,
+									});
+								}}
+							/>
+							<Flex vertical>
+								<TypographyText>Payloads</TypographyText>
+								<Flex vertical gap={16}>
+									{Payloads}
+								</Flex>
 							</Flex>
 						</Flex>
+						<Divider />
+						<DeleteNode onClick={props.onDelete(props)} />
 					</Flex>
 				</Drawer>
 			);

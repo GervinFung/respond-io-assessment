@@ -1,6 +1,6 @@
 import { defineComponent, type PropType } from 'vue';
 
-import { Drawer, Flex, TypographyText } from 'ant-design-vue';
+import { Divider, Drawer, Flex, TypographyText } from 'ant-design-vue';
 
 import { BoltIcon } from '@heroicons/vue/24/outline';
 
@@ -10,6 +10,7 @@ import { AbstractNode, props, childProps, isCurrentId } from './abstract';
 import { TextField } from './input';
 import type { NodeStore } from '../stores/nodes';
 import { useDrawer } from '../logic/drawer';
+import { DeleteNode } from './delete-node';
 
 const Component = defineComponent({
 	props: {
@@ -62,6 +63,7 @@ const TriggerDrawer = defineComponent({
 			type: Function as PropType<NodeStore['updateTrigger']>,
 			required: true,
 		},
+		onDelete: childProps.onDelete,
 	},
 	setup(props) {
 		const drawer = useDrawer(() => {
@@ -75,29 +77,39 @@ const TriggerDrawer = defineComponent({
 					open={drawer.open.value}
 					onClose={drawer.onClose}
 				>
-					<Flex vertical gap={8}>
-						<TextField
-							title="Title"
-							placeholder="Add a title"
-							value={props.title}
-							onChange={(title) => {
-								props.onChange({
-									title,
-									value: props.value,
-								});
-							}}
-						/>
-						<TextField
-							title="Value"
-							placeholder="Add a value"
-							value={props.value}
-							onChange={(value) => {
-								props.onChange({
-									title: props.title,
-									value,
-								});
-							}}
-						/>
+					<Flex
+						gap={8}
+						vertical
+						style={{
+							padding: '8px',
+						}}
+					>
+						<Flex vertical gap={16}>
+							<TextField
+								title="Title"
+								placeholder="Add a title"
+								value={props.title}
+								onChange={(title) => {
+									props.onChange({
+										title,
+										value: props.value,
+									});
+								}}
+							/>
+							<TextField
+								title="Value"
+								placeholder="Add a value"
+								value={props.value}
+								onChange={(value) => {
+									props.onChange({
+										title: props.title,
+										value,
+									});
+								}}
+							/>
+						</Flex>
+						<Divider />
+						<DeleteNode onClick={props.onDelete(props)} />
 					</Flex>
 				</Drawer>
 			);

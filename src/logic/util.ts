@@ -8,15 +8,14 @@ import type nodelist from '../data/nodes';
 
 import { size } from '../const';
 
-type Coordinate = Readonly<{ x: number; y: number }>;
+type Coordinate = Readonly<{
+	x: number;
+	y: number;
+}>;
 
 const generateNodesPositions = <Nodes extends typeof nodelist>(
 	nodes: Nodes
-): ReadonlyArray<
-	Nodes[0] & {
-		position: Coordinate;
-	}
-> => {
+) => {
 	// Create a new directed graph
 	const graph = new dagre.graphlib.Graph();
 

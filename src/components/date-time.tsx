@@ -20,6 +20,8 @@ import 'moment-timezone';
 import { AbstractNode, props, childProps, isCurrentId } from './abstract';
 import type { NodeStore } from '../stores/nodes';
 import { useDrawer } from '../logic/drawer';
+import { Toolbar } from './toolbar';
+import { DeleteNode } from './delete-node';
 
 const Component = defineComponent({
 	props: {
@@ -32,19 +34,22 @@ const Component = defineComponent({
 	setup(props) {
 		return () => {
 			return (
-				<AbstractNode
-					{...props}
-					icon={
-						<CalendarIcon
-							style={{
-								width: '24px',
-								color: props.color,
-							}}
-						/>
-					}
-				>
-					<TypographyText>{props.value}</TypographyText>
-				</AbstractNode>
+				<>
+					<Toolbar />
+					<AbstractNode
+						{...props}
+						icon={
+							<CalendarIcon
+								style={{
+									width: '24px',
+									color: props.color,
+								}}
+							/>
+						}
+					>
+						<TypographyText>{props.value}</TypographyText>
+					</AbstractNode>
+				</>
 			);
 		};
 	},
@@ -55,11 +60,13 @@ const DateTimeDrawer = defineComponent({
 		id: props.id,
 		paramId: childProps.paramId,
 		businessHourTimes: {
-			type: Array as PropType<NodeStore['businessHourTimes']>,
+			type: Function as PropType<NodeStore['findBusinessHourTimesById']>,
 			required: true,
 		},
 		businessHourTimezone: {
-			type: String as PropType<NodeStore['businessHourTimezone']>,
+			type: Function as PropType<
+				NodeStore['findBusinessHourTimezoneById']
+			>,
 			required: true,
 		},
 		updateBusinessHourTimes: {
@@ -70,6 +77,7 @@ const DateTimeDrawer = defineComponent({
 			type: Function as PropType<NodeStore['updateTimezone']>,
 			required: true,
 		},
+		onDelete: childProps.onDelete,
 	},
 	setup(props) {
 		const drawer = useDrawer(() => {
@@ -90,38 +98,43 @@ const DateTimeDrawer = defineComponent({
 							padding: '8px',
 						}}
 					>
-						<Flex vertical align="flex-start" gap={8}>
-							{props.businessHourTimes.map((time, index) => {
-								return (
-									<Flex vertical align="flex-start">
-										<TypographyText>
-											{capitalize(time.day)}
-										</TypographyText>
-										<TimeRangePicker
-											valueFormat="HH:mm"
-											format="HH:mm"
-											value={[
-												time.startTime,
-												time.endTime,
-											]}
-											style={{
-												width: '150px',
-											}}
-											use12Hours={false}
-											onChange={(value) => {
-												props.updateBusinessHourTimes(
-													index,
-													(value ?? []).map(
-														(time) => {
-															return time?.toString();
+						<Flex vertical align="flex-start" gap={16}>
+							{props
+								.businessHourTimes(props.id)
+								.map((time, index) => {
+									return (
+										<Flex vertical align="flex-start">
+											<TypographyText>
+												{capitalize(time.day)}
+											</TypographyText>
+											<TimeRangePicker
+												valueFormat="HH:mm"
+												format="HH:mm"
+												value={[
+													time.startTime,
+													time.endTime,
+												]}
+												style={{
+													width: '150px',
+												}}
+												use12Hours={false}
+												onChange={(value) => {
+													props.updateBusinessHourTimes(
+														{
+															id: props.id,
+															index,
+															times: (
+																value ?? []
+															).map((time) => {
+																return time?.toString();
+															}),
 														}
-													)
-												);
-											}}
-										/>
-									</Flex>
-								);
-							})}
+													);
+												}}
+											/>
+										</Flex>
+									);
+								})}
 						</Flex>
 						<Divider />
 						<Flex align="flex-start" vertical>
@@ -130,7 +143,7 @@ const DateTimeDrawer = defineComponent({
 								style={{
 									width: '200px',
 								}}
-								value={props.businessHourTimezone}
+								value={props.businessHourTimezone(props.id)}
 								onChange={(value) => {
 									props.updateTimezone(
 										Defined.parse(value)
@@ -169,6 +182,8 @@ const DateTimeDrawer = defineComponent({
 									})}
 							</Select>
 						</Flex>
+						<Divider />
+						<DeleteNode onClick={props.onDelete(props)} />
 					</Flex>
 				</Drawer>
 			);

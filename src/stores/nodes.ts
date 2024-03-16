@@ -38,31 +38,45 @@ const useNodeStore = defineStore('nodes', {
 		};
 	},
 	getters: {
-		businessHour: (state) => {
-			return Defined.parse(
-				state.nodes.find((node) => {
-					return node.type.startsWith('dateTime');
-				})
-			).orThrow('Business Hours is not defined');
+		findBusinessHourById: (state) => {
+			return (id: string) => {
+				return Defined.parse(
+					state.nodes.find((node) => {
+						return (
+							node.type.startsWith('dateTime') && node.id === id
+						);
+					})
+				).orThrow('Business Hours is not defined');
+			};
 		},
-		businessHourTimezone(): string {
-			return Defined.parse(this.businessHour.timezone).orThrow(
-				'Timezone is not defined'
-			);
+		findBusinessHourTimezoneById(): (id: string) => string {
+			return (id: string) => {
+				return Defined.parse(
+					this.findBusinessHourById(id).timezone
+				).orThrow('Timezone is not defined');
+			};
 		},
-		businessHourTimes(): ReadonlyArray<{
+		findBusinessHourTimesById(): (id: string) => ReadonlyArray<{
 			startTime: string;
 			endTime: string;
 			day: string;
 		}> {
-			return Defined.parse(this.businessHour.data.times).orThrow(
-				'Times are not defined'
-			);
+			return (id: string) => {
+				return Defined.parse(
+					this.findBusinessHourById(id).data.times
+				).orThrow('Times are not defined');
+			};
 		},
-		comments: (state) => {
-			return state.nodes.filter((node) => {
-				return node.type.startsWith('addComment');
-			});
+		findCommentById: (state) => {
+			return (id: string) => {
+				return Defined.parse(
+					state.nodes.find((node) => {
+						return (
+							node.type.startsWith('addComment') && node.id === id
+						);
+					})
+				).orThrow(`Comment Node with id of "${id}" not found`);
+			};
 		},
 		trigger: (state) => {
 			return Defined.parse(
@@ -71,10 +85,26 @@ const useNodeStore = defineStore('nodes', {
 				})
 			).orThrow('Trigger is not defined');
 		},
-		sendMessages: (state) => {
-			return state.nodes.filter((node) => {
-				return node.type.startsWith('sendMessage');
-			});
+		findSendMessageById: (state) => {
+			return (id: string) => {
+				return Defined.parse(
+					state.nodes.find((node) => {
+						return (
+							node.type.startsWith('sendMessage') &&
+							node.id === id
+						);
+					})
+				).orThrow(`Send Message Node with id of "${id}" not found`);
+			};
+		},
+		findNodeById: (state) => {
+			return (id: string) => {
+				return Defined.parse(
+					state.nodes.find((node) => {
+						return node.id === id;
+					})
+				).orThrow(`Node with id of "${id}" not found`);
+			};
 		},
 	},
 	actions: {
@@ -86,10 +116,18 @@ const useNodeStore = defineStore('nodes', {
 			this.nodes[index].timezone = timezone;
 		},
 		updateBusinessHourTimes(
-			index: number,
-			[start, end]: ReadonlyArray<string | undefined>
+			props: Readonly<{
+				id: string;
+				index: number;
+				times: ReadonlyArray<string | undefined>;
+			}>
 		) {
-			const times = this.businessHourTimes;
+			const {
+				index,
+				times: [start, end],
+			} = props;
+
+			const times = this.findBusinessHourTimesById(props.id);
 
 			times[index].startTime = Defined.parse(start).orThrow(
 				'start is not defined'
@@ -107,11 +145,7 @@ const useNodeStore = defineStore('nodes', {
 		) {
 			// idk why pinia auto passes an event object when clicking outside
 			if (!(props instanceof Event)) {
-				const comment = Defined.parse(
-					this.comments.find((comment) => {
-						return comment.id === props.id;
-					})
-				).orThrow(`Comment node with id of "${props.id}" not found`);
+				const comment = this.findCommentById(props.id);
 
 				comment.data.comment = props.comment;
 				comment.name = props.name;
@@ -129,7 +163,7 @@ const useNodeStore = defineStore('nodes', {
 				this.trigger.name = props.title;
 			}
 		},
-		updateSendMessages(
+		updateSendMessage(
 			props: Readonly<{
 				id: string;
 				name: string;
@@ -138,13 +172,7 @@ const useNodeStore = defineStore('nodes', {
 		) {
 			// idk why pinia auto passes an event object when clicking outside
 			if (!(props instanceof Event)) {
-				const sendMessage = Defined.parse(
-					this.sendMessages.find((message) => {
-						return message.id === props.id;
-					})
-				).orThrow(
-					`SendMessage node with id of "${props.id}" not found`
-				);
+				const sendMessage = this.findSendMessageById(props.id);
 
 				sendMessage.data.payload = props.payload.slice();
 				sendMessage.name = props.name;
@@ -156,16 +184,18 @@ const useNodeStore = defineStore('nodes', {
 				position: Coordinate;
 			}>
 		) {
-			this.nodes = this.nodes.map((node) => {
-				if (props.id !== node.id) {
-					return node;
-				}
-
-				return {
-					...node,
-					position: props.position,
-				};
-			});
+			this.findNodeById(props.id).position = props.position;
+		},
+		deleteNode(
+			props: Readonly<{
+				id: string;
+			}>
+		) {
+			return () => {
+				this.nodes = this.nodes.filter((node) => {
+					return node.id !== props.id;
+				});
+			};
 		},
 	},
 });

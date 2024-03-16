@@ -3,21 +3,32 @@ import type { JSX } from 'vue/jsx-runtime';
 
 import { useRoute } from 'vue-router';
 
-import { VueFlow, type Node, type Edge } from '@vue-flow/core';
+import {
+	VueFlow,
+	type Edge,
+	type Node,
+	Position,
+	PanelPosition,
+} from '@vue-flow/core';
 import { Background } from '@vue-flow/background';
 import { MiniMap } from '@vue-flow/minimap';
+import { ControlButton, Controls } from '@vue-flow/controls';
 
 import { Flex } from 'ant-design-vue';
 
+import { FolderPlusIcon } from '@heroicons/vue/24/outline';
+
 import '@vue-flow/core/dist/style.css';
 import '@vue-flow/core/dist/theme-default.css';
+
+import '@vue-flow/controls/dist/style.css';
 
 import '@fontsource-variable/inter/slnt.css';
 import '@fontsource-variable/inter';
 
 import { storeToRefs } from 'pinia';
 
-import { Defined, Optional, isNotUndefined } from '@poolofdeath20/util';
+import { Defined, Optional } from '@poolofdeath20/util';
 
 import { ConversationTrigger } from '../components/trigger';
 import { SendMessage } from '../components/send-message';
@@ -25,7 +36,6 @@ import { DateTime } from '../components/date-time';
 import { DateTimeConnector } from '../components/date-time-connector';
 import { AddComment } from '../components/add-comment';
 import useNodeStore from '../stores/nodes';
-import { generateNodesPositions } from '../logic/util';
 import { size } from '../const';
 
 type Type = Readonly<{
@@ -72,37 +82,35 @@ const Home = defineComponent({
 			AddComment(),
 		];
 
-		const colorsWithType = charts
-			.map(({ type }) => {
-				switch (type) {
-					case 'trigger': {
-						return {
-							type,
-							color: '#D2678F',
-						};
-					}
-					case 'sendMessage': {
-						return {
-							type,
-							color: '#67B6AD',
-						};
-					}
-					case 'dateTimeConnector':
-					case 'dateTime': {
-						return {
-							type,
-							color: '#FFB8A3',
-						};
-					}
-					case 'addComment': {
-						return {
-							type,
-							color: '#A0A9D7',
-						};
-					}
+		const colorsWithType = charts.map(({ type }) => {
+			switch (type) {
+				case 'trigger': {
+					return {
+						type,
+						color: '#D2678F',
+					};
 				}
-			})
-			.filter(isNotUndefined);
+				case 'sendMessage': {
+					return {
+						type,
+						color: '#67B6AD',
+					};
+				}
+				case 'dateTimeConnector':
+				case 'dateTime': {
+					return {
+						type,
+						color: '#FFB8A3',
+					};
+				}
+				case 'addComment': {
+					return {
+						type,
+						color: '#A0A9D7',
+					};
+				}
+			}
+		});
 
 		const nodeTypes = computed(() => {
 			return nodes.value
@@ -147,7 +155,7 @@ const Home = defineComponent({
 										<chart.Component
 											{...props}
 											onChange={
-												nodestore.updateSendMessages
+												nodestore.updateSendMessage
 											}
 											payload={Defined.parse(
 												node.data.payload
@@ -231,12 +239,26 @@ const Home = defineComponent({
 				);
 		});
 
+		const nodesFlowChart = computed(() => {
+			return nodes.value.map((node) => {
+				return {
+					...node,
+					data: {
+						...node.data,
+						toolbarPosition: Position.Top,
+						toolbarVisible: true,
+					},
+				} satisfies Node;
+			});
+		});
+
 		const edgesFlowChart = computed(() => {
 			return edges.value.map((edge) => {
 				return {
 					...edge,
 					type: 'smoothstep',
 					style: {
+						strokeWidth: 2,
 						stroke: colorsWithType.find(findMatchingNode(edge))
 							?.color,
 					},
@@ -263,6 +285,7 @@ const Home = defineComponent({
 							paramId: paramId.value,
 							id,
 							title: name,
+							onDelete: nodestore.deleteNode,
 						};
 
 						switch (chart.type) {
@@ -283,7 +306,7 @@ const Home = defineComponent({
 								return (
 									<chart.Drawer
 										{...props}
-										onChange={nodestore.updateSendMessages}
+										onChange={nodestore.updateSendMessage}
 										payload={Defined.parse(
 											node.data.payload
 										)
@@ -324,10 +347,10 @@ const Home = defineComponent({
 									<chart.Drawer
 										{...props}
 										businessHourTimes={
-											nodestore.businessHourTimes
+											nodestore.findBusinessHourTimesById
 										}
 										businessHourTimezone={
-											nodestore.businessHourTimezone
+											nodestore.findBusinessHourTimezoneById
 										}
 										updateTimezone={
 											nodestore.updateTimezone
@@ -373,16 +396,19 @@ const Home = defineComponent({
 					}}
 				>
 					<VueFlow
+						autoConnect
 						fitViewOnInit
-						nodes={nodes.value}
+						nodes={nodesFlowChart.value}
 						edges={edgesFlowChart.value}
 						nodeTypes={nodeTypes.value}
 						onNodeDrag={(event) => {
 							nodestore.updateNodePosition(event.node);
 						}}
+						onConnectEnd={console.log}
 					>
 						<Background pattern-color="#121212" gap={24} />
 						<MiniMap />
+						<Controls position={PanelPosition.TopRight} />
 					</VueFlow>
 					{drawers.value}
 				</Flex>
