@@ -1,4 +1,4 @@
-import { computed, defineComponent, markRaw } from 'vue';
+import { computed, defineComponent, markRaw, ref } from 'vue';
 import type { JSX } from 'vue/jsx-runtime';
 
 import { useRoute } from 'vue-router';
@@ -9,14 +9,13 @@ import {
 	type Node,
 	Position,
 	PanelPosition,
+	useVueFlow,
 } from '@vue-flow/core';
 import { Background } from '@vue-flow/background';
 import { MiniMap } from '@vue-flow/minimap';
-import { ControlButton, Controls } from '@vue-flow/controls';
+import { Controls } from '@vue-flow/controls';
 
 import { Flex } from 'ant-design-vue';
-
-import { FolderPlusIcon } from '@heroicons/vue/24/outline';
 
 import '@vue-flow/core/dist/style.css';
 import '@vue-flow/core/dist/theme-default.css';
@@ -54,6 +53,8 @@ const Home = defineComponent({
 	name: 'home',
 	setup() {
 		const route = useRoute();
+
+		const { updateEdge, addEdges } = useVueFlow();
 
 		const paramId = computed(() => {
 			return Optional.from(route.params.id).flatMap((id) => {
@@ -157,6 +158,9 @@ const Home = defineComponent({
 											onChange={
 												nodestore.updateSendMessage
 											}
+											onDuplicate={
+												nodestore.duplicateSendMessage
+											}
 											payload={Defined.parse(
 												node.data.payload
 											)
@@ -196,6 +200,9 @@ const Home = defineComponent({
 									return (
 										<chart.Component
 											{...props}
+											onDuplicate={
+												nodestore.duplicateDateTime
+											}
 											value={Defined.parse(
 												node.timezone
 											).orThrow(
@@ -211,6 +218,9 @@ const Home = defineComponent({
 									return (
 										<chart.Component
 											{...props}
+											onDuplicate={
+												nodestore.duplicateAddComment
+											}
 											value={Defined.parse(
 												node.data.comment
 											).orThrow(
@@ -257,6 +267,7 @@ const Home = defineComponent({
 				return {
 					...edge,
 					type: 'smoothstep',
+					updatable: true,
 					style: {
 						strokeWidth: 2,
 						stroke: colorsWithType.find(findMatchingNode(edge))
@@ -346,16 +357,16 @@ const Home = defineComponent({
 								return (
 									<chart.Drawer
 										{...props}
-										businessHourTimes={
-											nodestore.findBusinessHourTimesById
+										dateTimeTimes={
+											nodestore.findDateTimeTimesById
 										}
-										businessHourTimezone={
-											nodestore.findBusinessHourTimezoneById
+										dateTimeTimezone={
+											nodestore.findDatetimeTimezoneById
 										}
-										updateTimezone={
+										updateDatetimeTimezone={
 											nodestore.updateTimezone
 										}
-										updateBusinessHourTimes={
+										updateDatetimeTimes={
 											nodestore.updateBusinessHourTimes
 										}
 									/>
@@ -404,11 +415,16 @@ const Home = defineComponent({
 						onNodeDrag={(event) => {
 							nodestore.updateNodePosition(event.node);
 						}}
-						onConnectEnd={console.log}
+						onEdgeUpdate={({ edge, connection }) => {
+							updateEdge(edge, connection);
+						}}
+						onEdgeUpdateEnd={(event) => {
+							addEdges([event.edge]);
+						}}
 					>
 						<Background pattern-color="#121212" gap={24} />
 						<MiniMap />
-						<Controls position={PanelPosition.TopRight} />
+						<Controls position={PanelPosition.TopLeft} />
 					</VueFlow>
 					{drawers.value}
 				</Flex>

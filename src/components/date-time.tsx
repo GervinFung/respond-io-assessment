@@ -20,7 +20,6 @@ import 'moment-timezone';
 import { AbstractNode, props, childProps, isCurrentId } from './abstract';
 import type { NodeStore } from '../stores/nodes';
 import { useDrawer } from '../logic/drawer';
-import { Toolbar } from './toolbar';
 import { DeleteNode } from './delete-node';
 
 const Component = defineComponent({
@@ -30,26 +29,24 @@ const Component = defineComponent({
 		value: childProps.value,
 		color: childProps.color,
 		size: props.size,
+		onDuplicate: props.onDuplicate,
 	},
 	setup(props) {
 		return () => {
 			return (
-				<>
-					<Toolbar />
-					<AbstractNode
-						{...props}
-						icon={
-							<CalendarIcon
-								style={{
-									width: '24px',
-									color: props.color,
-								}}
-							/>
-						}
-					>
-						<TypographyText>{props.value}</TypographyText>
-					</AbstractNode>
-				</>
+				<AbstractNode
+					{...props}
+					icon={
+						<CalendarIcon
+							style={{
+								width: '24px',
+								color: props.color,
+							}}
+						/>
+					}
+				>
+					<TypographyText>{props.value}</TypographyText>
+				</AbstractNode>
 			);
 		};
 	},
@@ -59,21 +56,19 @@ const DateTimeDrawer = defineComponent({
 	props: {
 		id: props.id,
 		paramId: childProps.paramId,
-		businessHourTimes: {
-			type: Function as PropType<NodeStore['findBusinessHourTimesById']>,
+		dateTimeTimes: {
+			type: Function as PropType<NodeStore['findDateTimeTimesById']>,
 			required: true,
 		},
-		businessHourTimezone: {
-			type: Function as PropType<
-				NodeStore['findBusinessHourTimezoneById']
-			>,
+		dateTimeTimezone: {
+			type: Function as PropType<NodeStore['findDatetimeTimezoneById']>,
 			required: true,
 		},
-		updateBusinessHourTimes: {
+		updateDatetimeTimes: {
 			type: Function as PropType<NodeStore['updateBusinessHourTimes']>,
 			required: true,
 		},
-		updateTimezone: {
+		updateDatetimeTimezone: {
 			type: Function as PropType<NodeStore['updateTimezone']>,
 			required: true,
 		},
@@ -87,7 +82,7 @@ const DateTimeDrawer = defineComponent({
 		return () => {
 			return (
 				<Drawer
-					title="Business Hours"
+					title="Date Time Details"
 					open={drawer.open.value}
 					onClose={drawer.onClose}
 				>
@@ -100,7 +95,7 @@ const DateTimeDrawer = defineComponent({
 					>
 						<Flex vertical align="flex-start" gap={16}>
 							{props
-								.businessHourTimes(props.id)
+								.dateTimeTimes(props.id)
 								.map((time, index) => {
 									return (
 										<Flex vertical align="flex-start">
@@ -119,17 +114,15 @@ const DateTimeDrawer = defineComponent({
 												}}
 												use12Hours={false}
 												onChange={(value) => {
-													props.updateBusinessHourTimes(
-														{
-															id: props.id,
-															index,
-															times: (
-																value ?? []
-															).map((time) => {
-																return time?.toString();
-															}),
-														}
-													);
+													props.updateDatetimeTimes({
+														id: props.id,
+														index,
+														times: (
+															value ?? []
+														).map((time) => {
+															return time?.toString();
+														}),
+													});
 												}}
 											/>
 										</Flex>
@@ -143,9 +136,9 @@ const DateTimeDrawer = defineComponent({
 								style={{
 									width: '200px',
 								}}
-								value={props.businessHourTimezone(props.id)}
+								value={props.dateTimeTimezone(props.id)}
 								onChange={(value) => {
-									props.updateTimezone(
+									props.updateDatetimeTimezone(
 										Defined.parse(value)
 											.orThrow(
 												'value for timezone is not defined'

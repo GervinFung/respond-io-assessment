@@ -8,7 +8,6 @@ import { AbstractNode, props, childProps, isCurrentId } from './abstract';
 import { TextField } from './input';
 import type { NodeStore } from '../stores/nodes';
 import { useDrawer } from '../logic/drawer';
-import { Toolbar } from './toolbar';
 import { DeleteNode } from './delete-node';
 
 const Component = defineComponent({
@@ -18,26 +17,24 @@ const Component = defineComponent({
 		value: childProps.value,
 		color: childProps.color,
 		size: props.size,
+		onDuplicate: props.onDuplicate,
 	},
 	setup(props) {
 		return () => {
 			return (
-				<>
-					<Toolbar />
-					<AbstractNode
-						{...props}
-						icon={
-							<ChatBubbleBottomCenterIcon
-								style={{
-									width: '24px',
-									color: props.color,
-								}}
-							/>
-						}
-					>
-						<TypographyText>{props.value}</TypographyText>
-					</AbstractNode>
-				</>
+				<AbstractNode
+					{...props}
+					icon={
+						<ChatBubbleBottomCenterIcon
+							style={{
+								width: '24px',
+								color: props.color,
+							}}
+						/>
+					}
+				>
+					<TypographyText>{props.value}</TypographyText>
+				</AbstractNode>
 			);
 		};
 	},

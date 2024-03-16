@@ -18,7 +18,6 @@ import { AbstractNode, childProps, isCurrentId, props } from './abstract';
 import { TextField, TextInput } from './input';
 import type { NodeStore } from '../stores/nodes';
 import { useDrawer } from '../logic/drawer';
-import { Toolbar } from './toolbar';
 import { DeleteNode } from './delete-node';
 
 type Payload = Array<
@@ -51,6 +50,7 @@ const Component = defineComponent({
 		title: props.title,
 		size: props.size,
 		color: childProps.color,
+		onDuplicate: props.onDuplicate,
 		payload: {
 			type: Array as PropType<Payload>,
 			required: true,
@@ -71,49 +71,57 @@ const Component = defineComponent({
 	setup(props) {
 		return () => {
 			return (
-				<>
-					<Toolbar />
-					<AbstractNode
-						{...props}
-						icon={
-							<ChatBubbleLeftIcon
-								style={{
-									width: '24px',
-									color: props.color,
-								}}
-							/>
-						}
-					>
-						<Flex vertical>
-							{Defined.parse(props.payload.at(0))
-								.map((payload) => {
-									switch (payload.type) {
-										case 'text': {
-											return (
-												<>
-													<TypographyText>
-														Message:
-													</TypographyText>
-													<TypographyText mark>
-														{payload.text}
-													</TypographyText>
-												</>
-											);
-										}
-										case 'attachment': {
-											return (
-												<Image
-													src={payload.attachment}
-													alt="attachment"
-												/>
-											);
-										}
+				<AbstractNode
+					{...props}
+					icon={
+						<ChatBubbleLeftIcon
+							style={{
+								width: '24px',
+								color: props.color,
+							}}
+						/>
+					}
+				>
+					<Flex vertical>
+						{Defined.parse(props.payload.at(0))
+							.map((payload) => {
+								switch (payload.type) {
+									case 'text': {
+										return (
+											<>
+												<TypographyText>
+													Message:
+												</TypographyText>
+												<TypographyText mark>
+													{payload.text}
+												</TypographyText>
+											</>
+										);
 									}
-								})
-								.orThrow('first payload is undefined')}
-						</Flex>
-					</AbstractNode>
-				</>
+									case 'attachment': {
+										return (
+											<Image
+												src={payload.attachment}
+												alt="attachment"
+											/>
+										);
+									}
+								}
+							})
+							.orElse(() => {
+								return (
+									<>
+										<TypographyText>
+											Message:
+										</TypographyText>
+										<TypographyText>
+											*No message yet*
+										</TypographyText>
+									</>
+								);
+							})}
+					</Flex>
+				</AbstractNode>
 			);
 		};
 	},

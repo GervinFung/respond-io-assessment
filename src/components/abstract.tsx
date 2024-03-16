@@ -13,6 +13,8 @@ import { RouterLink } from 'vue-router';
 
 import { Flex, TypographyTitle } from 'ant-design-vue';
 
+import { FolderPlusIcon } from '@heroicons/vue/24/outline';
+
 import { equalTo, type Optional } from '@poolofdeath20/util';
 
 import type { NodeStore } from '../stores/nodes';
@@ -66,6 +68,10 @@ const props = {
 		type: Object as PropType<JSX.Element>,
 		required: true,
 	},
+	onDuplicate: {
+		type: Function as PropType<NodeStore['duplicateAddComment']>,
+		required: true,
+	},
 } as const;
 
 const AbstractNode = defineComponent({
@@ -103,13 +109,14 @@ const AbstractNode = defineComponent({
 							<Flex
 								gap={8}
 								align="center"
+								justify="space-between"
 								style={{
 									padding: `${style.padding}px`,
 									borderBottom: `1px solid ${style.borderColor}`,
 								}}
 							>
-								{props.icon}
-								<Flex>
+								<Flex gap={4}>
+									{props.icon}
 									<TypographyTitle
 										level={5}
 										// @ts-expect-error: Style doesn't exists for `TypographyTitle`, but injectable in runtime
@@ -120,6 +127,17 @@ const AbstractNode = defineComponent({
 										{props.title}
 									</TypographyTitle>
 								</Flex>
+								<FolderPlusIcon
+									style={{
+										width: '24px',
+										color: '#121212',
+									}}
+									onClick={(event) => {
+										event.preventDefault();
+
+										props.onDuplicate(props);
+									}}
+								/>
 							</Flex>
 							<div
 								style={{
